@@ -11,12 +11,16 @@ export const REVALIDATE_SECONDS = 60;
 /**
  * Typed read against the published CDN client. Callers pass the expected shape
  * (hand-written in `types.ts`, since typegen isn't wired up) as `T`.
+ *
+ * Returns `T | null`: our queries use `[0]` projections, which resolve to
+ * `null` when the document is absent. Surfacing that in the type forces callers
+ * to guard (`if (!home) ...` / optional chaining) rather than relying on it.
  */
 export async function sanityFetch<T>(
   query: string,
   params: QueryParams = {},
-): Promise<T> {
-  return client.fetch<T>(query, params, {
+): Promise<T | null> {
+  return client.fetch<T | null>(query, params, {
     next: { revalidate: REVALIDATE_SECONDS },
   });
 }

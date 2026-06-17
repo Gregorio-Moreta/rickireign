@@ -16,6 +16,9 @@ import { Connect } from "@/components/sections/Connect";
  * Sections render gracefully when their fields are empty (no assets seeded).
  */
 export default async function Home() {
+  // siteSettings is also fetched in the layout (for Nav/Footer); we re-fetch it
+  // here for the Connect section's social + contactEmail. Next dedupes identical
+  // fetch-backed requests within a render, so this is one network call.
   const [home, settings] = await Promise.all([
     sanityFetch<HomePage>(HOME_PAGE_QUERY),
     sanityFetch<SiteSettings>(SITE_SETTINGS_QUERY),
