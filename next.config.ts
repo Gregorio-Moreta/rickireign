@@ -43,6 +43,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
+  // Allow next/image to optimize Sanity-hosted assets. CSP `img-src` already
+  // permits cdn.sanity.io; this lets the optimizer fetch + resize from it.
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "cdn.sanity.io" }],
+  },
   async headers() {
     return [
       {

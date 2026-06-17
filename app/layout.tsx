@@ -4,6 +4,9 @@ import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { Analytics } from "@/components/analytics/Analytics";
 import { cn } from "@/lib/cn";
+import { sanityFetch } from "@/lib/sanity/fetch";
+import { SITE_SETTINGS_QUERY } from "@/lib/sanity/queries";
+import type { SiteSettings } from "@/lib/sanity/types";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,11 +27,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const settings = await sanityFetch<SiteSettings>(SITE_SETTINGS_QUERY);
+
   return (
     <html
       lang="en"
@@ -50,11 +55,15 @@ export default function RootLayout({
         </a>
 
         <span id="top" aria-hidden="true" />
-        <Nav />
+        <Nav wordmark={settings?.wordmark} links={settings?.nav} />
         <main id="main-content" className="flex-1">
           {children}
         </main>
-        <Footer />
+        <Footer
+          wordmark={settings?.wordmark}
+          social={settings?.social}
+          footerText={settings?.footerText}
+        />
         <Analytics />
       </body>
     </html>
