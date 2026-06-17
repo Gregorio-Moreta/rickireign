@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "rickireign",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": [
+    // Node.js API compatibility (required by the OpenNext Cloudflare adapter)
+    "nodejs_compat",
+    // Allow the app to fetch its own public URLs
+    "global_fetch_strictly_public"
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference, used by OpenNext for cache revalidation. Must match "name".
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "rickireign"
+    }
+  ],
+  "images": {
+    // Worker-native image optimization (next/image)
+    "binding": "IMAGES"
+  }
+}
