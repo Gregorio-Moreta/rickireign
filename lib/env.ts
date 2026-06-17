@@ -12,4 +12,8 @@
 export const publicEnv = {
   /** GA4 measurement id (e.g. "G-XXXXXXXXXX"). Undefined disables analytics. */
   gaMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+  /** Sanity project id (public). Required for content fetching. */
+  sanityProjectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
+  /** Sanity dataset (public), e.g. "production". Required for content fetching. */
+  sanityDataset: process.env.NEXT_PUBLIC_SANITY_DATASET,
 } as const;

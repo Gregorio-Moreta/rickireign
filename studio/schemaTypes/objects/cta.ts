@@ -15,8 +15,13 @@ export const cta = defineType({
     defineField({
       name: "href",
       type: "string",
-      description: "Full URL or an in-page anchor (e.g. #practice)",
-      validation: (rule) => rule.required(),
+      description: "Full URL, mailto:, in-page anchor (#practice), or path (/blog)",
+      validation: (rule) =>
+        rule.required().custom((value) =>
+          typeof value === "string" && /^(https?:\/\/|mailto:|#|\/)/.test(value)
+            ? true
+            : "Must start with http(s)://, mailto:, # (anchor), or / (path)",
+        ),
     }),
     defineField({
       name: "style",

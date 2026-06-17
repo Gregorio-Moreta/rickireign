@@ -12,11 +12,19 @@ export const SITE_SETTINGS_QUERY = defineQuery(`*[_type == "siteSettings"][0]{
 
 /** The single home-page document, with referenced businesses expanded. */
 export const HOME_PAGE_QUERY = defineQuery(`*[_type == "homePage"][0]{
-  ...,
+  hero,
+  guidingQuestions,
+  practice,
   foundedAndLed{
-    ...,
+    title,
+    intro,
     businesses[]->{ _id, name, tagline, description, image, externalUrl, order }
-  }
+  },
+  about,
+  whoIsThisFor,
+  newsletter,
+  connect,
+  seo
 }`);
 
 /** All businesses (Exhale Under Pressure, Community Birth Village), ordered. */
