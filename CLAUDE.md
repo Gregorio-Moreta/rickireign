@@ -1,40 +1,83 @@
-# rickireign.com — project context for Claude Code
+# rickireign.com — project brief for Claude Code
 
-This file is loaded automatically every session. It's the operating brief. Two companion docs are authoritative and should be read before building:
-- **`DESIGN.md`** (repo root) — the brand/design system. Source of truth for colors, typography, spacing, radii.
-- **`docs/PLAN.md`** — the full project plan: IA, Sanity content model, component inventory, integrations, build phases, open decisions.
+Loaded every session. This is the durable operating memory. Two companion docs are authoritative:
+- **`DESIGN.md`** (root) — brand/design system ("Ancestral Modernity"). Source of truth for colors, type, spacing, radii.
+- **`docs/PLAN.md`** — full plan: IA, Sanity content model (§4), component inventory (§5), build phases (§7).
+- **`docs/SESSION_STATE.md`** — transient handoff for the phase currently in flight. Read it to see where we are.
 
 ## What this is
-A calm, premium marketing site that establishes **Ricki Reign as a founder, facilitator, and organizational leader**, lets people follow her (newsletter + socials), and routes them to work with her. A visitor should leave able to answer: **Who is Reign? What does she do? How do I work with her?**
+A calm, premium marketing site establishing **Ricki Reign** as a founder, facilitator, and organizational leader; lets people follow her (newsletter + socials) and routes them to work with her. A visitor should leave able to answer: who is Reign, what does she do, how do I work with her. **No payments, no user accounts.** Single-scroll home + `/blog` (later) + `/privacy` `/terms`.
 
-**No payments. No user accounts.** Content site with a blog (later).
+## Stack & architecture
+- **Next.js 16 (App Router) + TypeScript strict + Tailwind v4** (tokens in `app/globals.css` `@theme`, no `tailwind.config.ts`). React 19. Top-level `app/` `components/` `lib/` — **no `src/`**, import alias `@/*`.
+- **Dual deploy: Vercel AND Cloudflare Workers** (via OpenNext, `@opennextjs/cloudflare`). Both are live and must stay green.
+- **Sanity v6** for content — **standalone Studio** in `studio/` (its own package), project `zsuyhr45`, public `production` dataset. App reads published content with a **token-less CDN client**.
+- **GA4** via `@next/third-parties` (consent seam in place, gating is Phase 3). **Brevo** (newsletter, Phase 3), **Calendly** (booking), **Cloudflare Turnstile** (forms, Phase 3).
+- Node **24** is pinned (`.node-version`) so local/Vercel/Cloudflare all use npm 11.
 
-## Stack
-- **Next.js (App Router) + TypeScript (strict) + Tailwind**, deployed on **Vercel**.
-- **Sanity** (headless CMS) for content + blog. Remote MCP at `mcp.sanity.io` (OAuth).
-- **Brevo** for newsletter (double opt-in, one general list) + contact email. Key server-only.
-- **Calendly** for the "Book a Discovery Call" flow (embed via public scheduling URL).
-- **GA4** via `@next/third-parties` (consent-gated). **Cloudflare Turnstile** on forms.
+## Repo layout
+- `app/`, `components/{layout,ui,analytics}/`, `lib/` (`env.ts`, `cn.ts`, `fonts.ts`, `sanity/{client,image,queries}.ts`) — the Next.js app.
+- `studio/` — standalone Sanity Studio (`sanity.config.ts`, `sanity.cli.ts`, `structure.ts`, `schemaTypes/{documents,objects}`). Has its own `package.json` + lockfile; excluded from the app's tsc & eslint.
+- `next.config.ts` — security headers + CSP. `wrangler.jsonc` + `open-next.config.ts` — Cloudflare. `vercel.json` — pins Vercel framework.
 
-## Structure (per the plan)
-Single-scroll home with sections: Hero → Guiding Questions → **The Practice** (her bookable somatic/leadership work) → **Founded & Led** (Exhale Under Pressure + Community Birth Village as separate businesses she runs, linking out) → Meet Reign → Who is this for? → Join the list (newsletter) → Connect (socials + contact). Plus `/blog` (later), `/privacy`, `/terms`.
+## Rules for every session
+- **Plan first.** Non-trivial work gets a plan approved before code (the human signs off at the plan and again before merge).
+- **Never delete branches.** No `gh pr merge --delete-branch`, no `git branch -D`, no `git push --delete` unless explicitly asked for a named branch. Every branch lives on **both** local and the remote. Numbered branches `NNN-summary` (`000-foundation`, `001-content-model`, `002-…`), Conventional Commits, co-author trailer `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
+- **Secrets server-only.** Only genuinely public values get `NEXT_PUBLIC_*`. Server secrets (Brevo key, Turnstile secret, Sanity tokens) are never `NEXT_PUBLIC_`, never committed (`.env*` gitignored except `.env.example`). On Cloudflare, `NEXT_PUBLIC_*` are **plaintext build vars** (correct — they're public); un-prefixed secrets become encrypted secrets (Phase 3).
+- **Sanity reads are token-less** (public dataset via CDN). The app must never carry a write/editor token.
+- Subagents exist (`frontend-builder`, `backend-builder`, `code-reviewer`, `git-manager`, `qa-tester`) and run in **isolated worktrees** under `.claude/worktrees/` — their output must be consolidated onto the working branch. They are **sandboxed and cannot do git writes** or interactive logins — run `git add/commit/push`, `gh pr`, and `vercel`/`sanity` logins **from the main session** (Bash with `dangerouslyDisableSandbox: true` for git/network).
+- The `house-style`, `secure-defaults`, `context-economy`, `git-conventions` skills apply automatically; `frontend-builder` uses UI/UX Pro Max (DESIGN.md wins on brand).
 
-**Do not** present the two businesses as "offerings" of this site, and **do not** include Brand Activations (not live yet). Section labels ("The Practice", "Founded & Led") are placeholders pending Ricki's decision.
+## Commands (exact)
+```bash
+# App
+npm run dev                       # dev server :3000
+npm run build                     # next build (Turbopack) — the Vercel build
+npm run lint && npx tsc --noEmit  # must be clean before commit
+npm run deploy                    # opennextjs-cloudflare build && deploy (also the CF dashboard deploy cmd)
+npm run preview                   # build + run the Worker locally (workerd)
+npx opennextjs-cloudflare build   # produce .open-next/worker.js only
 
-## How we work (this is an agentic project)
-- **Plan first, always.** For any non-trivial work, use `/ultraplan` or `/scaffold` and get my approval on the plan before code is written.
-- **Parallel subagents in isolated worktrees:** `backend-builder` (Sanity + form endpoints), `frontend-builder` (UI), `qa-tester` (Playwright), `code-reviewer` (security + standards), `git-manager` (branches/commits/PRs). The backend contract is the source of truth; the frontend builds against it.
-- **Review gates:** I sign off at the plan and again before any merge. Never merge without my approval.
-- The installed plugin skills apply automatically: `house-style`, `secure-defaults`, `context-economy`, `git-conventions`. The `frontend-builder` uses **UI/UX Pro Max** for design intelligence (but `DESIGN.md` wins on brand) and runs its pre-delivery checklist.
+# Studio (standalone — run from studio/)
+cd studio && npm run dev          # Studio :3333
+cd studio && npm run schema:deploy  # = sanity schema deploy (needed before MCP/typegen see new types)
+cd studio && npx sanity build       # validate Studio compiles
+cd studio && npx sanity deploy      # deploy Studio to *.sanity.studio hosting
 
-## Version control
-Numbered branches `NNN-short-summary` (`000`, `001`, …, mapping to plan phases) and **Conventional Commits**. The `git-manager` owns this. Never commit `.env*` or secrets (a guard hook enforces this).
+# Sanity auth + seed
+npx sanity@latest login --provider github   # CLI login (interactive; run via `! ...` in-session)
+# Seeding/content: use the Sanity MCP (create_documents → publish_documents). Do NOT use `sanity init` (its TUI doesn't drive through the agent).
 
-## Security must-haves (see `secure-defaults`)
-Secrets are server-only (Brevo key, Turnstile secret, Sanity tokens) — never `NEXT_PUBLIC_*`. Forms: server-side Zod validation + Turnstile + rate-limit. Sanity: read-only CDN client for public content; signed revalidation webhooks. Security headers/CSP set. Privacy policy + consent banner (GA + email collection).
+# Deploy/inspect
+vercel --prod                     # deploy main to Vercel prod (CLI is authed; `! vercel login` if not)
+gh pr create --base main --head <branch>   # PRs from the main session
+```
+
+## Key decisions & why
+- **Dual deploy (Vercel + Cloudflare).** The human wants both as a safety net; treat both as first-class. (Expanded beyond the original Vercel-only plan, deliberately.)
+- **Standalone Studio, not embedded `/studio`.** Embedding compiles the Studio into *both* the Vercel and Cloudflare builds (slow, heavy), needs Studio CORS+CSP, and ties Studio updates to app redeploys. Sanity recommends standalone for new Next.js. The app only `next-sanity`-fetches.
+- **Token-less CDN read client + public dataset.** Public marketing content; `secure-defaults`. Server-side reads in Server Components mean the public site needs **no CORS** and **no token** anywhere.
+- **CORS scoped to `localhost:3000` + `https://rickireign.vercel.app`, never `*.vercel.app`.** A credentialed wildcard would let any `*.vercel.app` site ride a logged-in editor's session. The Studio (browser-credentialed) is the only thing that needs CORS; the site itself doesn't (SSR).
+- **Sanity/Studio points at `rickireign.vercel.app` (dev/staging), not `rickireign.com`.** The real domain still hosts the *old* site we're replacing; cut over later.
+- **One dataset; environment differences come from Vercel's built-ins** (`VERCEL_ENV`/`VERCEL_URL`), not per-env datasets — keep it simple.
+
+## Gotchas (don't re-learn these the hard way)
+- **EPIPE on Vercel build:** `initOpenNextCloudflareForDev()` only guards on AsyncLocalStorage, so it runs during `next build` and crashes with `unhandledRejection: write EPIPE`. It is guarded in `next.config.ts` with `if (process.env.NODE_ENV === "development")` + dynamic import. Keep that guard.
+- **Cloudflare `npm ci` "Missing esbuild from lock":** caused by an npm-version mismatch (CF defaulted to Node 22/npm 10 reading an npm-11 lockfile). Fixed by `.node-version` = 24. Keep local npm and CI aligned.
+- **Vercel "No Output Directory named public":** Vercel auto-detected framework "Other". Fixed by `vercel.json` `{"framework":"nextjs"}`.
+- **Cloudflare deploy via `wrangler.jsonc` overrides remote Worker config:** it wipes dashboard *runtime* vars and re-enables `workers_dev`/`preview_urls` each deploy. Manage runtime env via `wrangler.jsonc` `vars` / `wrangler secret put`. (Build vars used by `next build` are separate Workers-Builds settings and are NOT wiped.)
+- **ESLint flat config ignores `.gitignore`.** Generated/foreign dirs must be in `eslint.config.mjs` `globalIgnores`: `.next`, `.open-next`, `.wrangler`, `.vercel`, `studio/**`. Otherwise ESLint walks bundled JS and reports thousands of errors.
+- **App `tsconfig.json` excludes `studio`** (its `**/*.ts` include would otherwise typecheck the Studio with the wrong config).
+- **`@sanity/image-url` is a required direct dep** — `next-sanity` does NOT bundle it. Import the **named** `createImageUrlBuilder` (default export is deprecated); `SanityImageSource` is on the package's main entry (not `/lib/types/types`).
+- **Sanity seeding order:** publish referenced docs (e.g. `business`) **before** creating the doc that references them (`homePage`), or the mutation fails "references non-existent document." Singletons use a fixed `_id` (`siteSettings`, `homePage`) so the Studio Structure maps to them.
+- **The guard hook blocks any Bash command containing the literal `.env`** (even in an echo/grep comment). Avoid that substring in commands.
+
+## Deploy targets (reference)
+- **Vercel:** project `rickireign` (prod `https://rickireign.vercel.app`). Deployment Protection is off. (A duplicate `rickireign-zb6j` project was removed — keep a single project.)
+- **Cloudflare:** Worker `rickireign` (prod `https://rickireign.gregoriomoreta4.workers.dev`). Dashboard deploy command = `npm run deploy`.
+
+## Build phases (docs/PLAN.md §7)
+0 Foundation ✓ · 1 Content model ✓ · **2 Home** (wire sections to Sanity) · 3 Forms & legal · 4 Blog · 5 Verify & ship.
 
 ## Don't
-- Don't add Supabase — this project uses Sanity.
-- Don't invent brand values — pull from `DESIGN.md`.
-- Don't expand scope past the approved plan without checking in.
-- Don't reach for a dependency the stack already covers.
+Don't add Supabase (this is Sanity). Don't invent brand values (DESIGN.md). Don't embed the Studio. Don't expand scope past the approved plan without checking in. Don't reach for a dependency the stack already covers.
