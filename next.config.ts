@@ -55,7 +55,16 @@ const nextConfig: NextConfig = {
 
 export default nextConfig;
 
-// Enable Cloudflare bindings (and OpenNext context) during local `next dev`.
-// No-op for the Vercel/standard build; only wires up the Cloudflare dev shim.
-import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
-initOpenNextCloudflareForDev();
+// Wire Cloudflare bindings into the local `next dev` server ONLY.
+// Guard on NODE_ENV so this never runs during `next build`: the adapter's own
+// guard checks only for AsyncLocalStorage (not dev mode), so on a production
+// build it would spin up the wrangler/miniflare proxy and crash the build with
+// `unhandledRejection: write EPIPE` (seen on Vercel). The dynamic import also
+// keeps the proxy code out of production bundles entirely.
+if (process.env.NODE_ENV === "development") {
+  void import("@opennextjs/cloudflare")
+    .then(({ initOpenNextCloudflareForDev }) => initOpenNextCloudflareForDev())
+    .catch((error) => {
+      console.warn("initOpenNextCloudflareForDev (dev) failed:", error);
+    });
+}
