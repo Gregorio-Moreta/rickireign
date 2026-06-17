@@ -16,6 +16,10 @@ const eslintConfig = defineConfig([
     ".open-next/**",
     ".wrangler/**",
     "cloudflare-env.d.ts",
+    // Standalone Sanity Studio is its own package with its own tooling.
+    "studio/**",
+    // Local Vercel build output (from `vercel build`), machine-generated.
+    ".vercel/**",
   ]),
 ]);
 

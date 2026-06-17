@@ -17,7 +17,7 @@ const cspDirectives = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://*.googletagmanager.com https://*.google-analytics.com",
   "connect-src 'self' https://*.google-analytics.com https://*.googletagmanager.com https://region1.google-analytics.com",
-  "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com",
+  "img-src 'self' data: https://cdn.sanity.io https://*.google-analytics.com https://*.googletagmanager.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "frame-ancestors 'none'",
