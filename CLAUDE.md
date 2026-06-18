@@ -66,6 +66,7 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Cloudflare `npm ci` "Missing esbuild from lock":** caused by an npm-version mismatch (CF defaulted to Node 22/npm 10 reading an npm-11 lockfile). Fixed by `.node-version` = 24. Keep local npm and CI aligned.
 - **Vercel "No Output Directory named public":** Vercel auto-detected framework "Other". Fixed by `vercel.json` `{"framework":"nextjs"}`.
 - **Cloudflare deploy via `wrangler.jsonc` overrides remote Worker config:** it wipes dashboard *runtime* vars and re-enables `workers_dev`/`preview_urls` each deploy. Manage runtime env via `wrangler.jsonc` `vars` / `wrangler secret put`. (Build vars used by `next build` are separate Workers-Builds settings and are NOT wiped.)
+- **`NEXT_PUBLIC_*` are inlined at `next build` time** → on Cloudflare they must be **Workers-Builds *build* vars**, NOT the runtime Variables section (which `next build` never reads and `wrangler.jsonc` wipes). Phase 2 deploys failed repeatedly (`/_not-found` threw "Missing NEXT_PUBLIC_SANITY_*") until this was understood. Because the Sanity `projectId`/`dataset` are public constants, `lib/env.ts` now commits them as defaults (`process.env.… || "zsuyhr45"` / `"production"`) so the build can't break on a missing build var; an env var still overrides. Apply the same default-or-build-var rule to future public keys (Turnstile site key, Calendly URL); keep real **secrets** out of `lib/env.ts` and out of `NEXT_PUBLIC_*`.
 - **ESLint flat config ignores `.gitignore`.** Generated/foreign dirs must be in `eslint.config.mjs` `globalIgnores`: `.next`, `.open-next`, `.wrangler`, `.vercel`, `studio/**`. Otherwise ESLint walks bundled JS and reports thousands of errors.
 - **App `tsconfig.json` excludes `studio`** (its `**/*.ts` include would otherwise typecheck the Studio with the wrong config).
 - **`@sanity/image-url` is a required direct dep** — `next-sanity` does NOT bundle it. Import the **named** `createImageUrlBuilder` (default export is deprecated); `SanityImageSource` is on the package's main entry (not `/lib/types/types`).
@@ -77,7 +78,7 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Cloudflare:** Worker `rickireign` (prod `https://rickireign.gregoriomoreta4.workers.dev`). Dashboard deploy command = `npm run deploy`.
 
 ## Build phases (docs/PLAN.md §7)
-0 Foundation ✓ · 1 Content model ✓ · **2 Home** (wire sections to Sanity) · 3 Forms & legal · 4 Blog · 5 Verify & ship.
+0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (sections wired to Sanity; PR #4) · **3 Forms & legal** (newsletter DOI + contact + Turnstile, `/privacy` `/terms`, consent banner) · 4 Blog · 5 Verify & ship.
 
 ## Don't
 Don't add Supabase (this is Sanity). Don't invent brand values (DESIGN.md). Don't embed the Studio. Don't expand scope past the approved plan without checking in. Don't reach for a dependency the stack already covers.

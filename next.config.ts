@@ -2,16 +2,16 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 /**
- * Content-Security-Policy for Phase 0. Allows only the third parties wired up
- * now: Google Analytics (via @next/third-parties). next/font self-hosts fonts,
- * so fonts are effectively 'self'; the Google Fonts origins are listed per the
- * plan and are harmless.
+ * Content-Security-Policy. Active third parties: Google Analytics (via
+ * @next/third-parties) and the Sanity image CDN (img-src cdn.sanity.io —
+ * Phase 2, also backing next/image's remotePatterns below). next/font
+ * self-hosts fonts, so fonts are effectively 'self'; the Google Fonts origins
+ * are listed per the plan and are harmless.
  *
- * Later phases will need these origins (kept here as a reference — NOT active):
- *   Sanity image CDN:     img-src https://cdn.sanity.io
+ * Still deferred (kept here as a reference — NOT active until their phase):
  *   Sanity API:           connect-src https://*.api.sanity.io https://*.apicdn.sanity.io
- *   Cloudflare Turnstile: script-src / frame-src https://challenges.cloudflare.com
- *   Calendly:             frame-src https://*.calendly.com ; script-src https://assets.calendly.com
+ *   Cloudflare Turnstile: script-src / frame-src https://challenges.cloudflare.com  (Phase 3)
+ *   Calendly:             frame-src https://*.calendly.com ; script-src https://assets.calendly.com  (Phase 3)
  */
 const cspDirectives = [
   "default-src 'self'",
@@ -42,6 +42,11 @@ const nextConfig: NextConfig = {
   // lockfile elsewhere on the machine.
   turbopack: {
     root: path.join(__dirname),
+  },
+  // Allow next/image to optimize Sanity-hosted assets. CSP `img-src` already
+  // permits cdn.sanity.io; this lets the optimizer fetch + resize from it.
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "cdn.sanity.io" }],
   },
   async headers() {
     return [

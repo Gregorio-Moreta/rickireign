@@ -1,42 +1,45 @@
-import { Section } from "@/components/layout/Section";
-import { Container } from "@/components/layout/Container";
-import { Button } from "@/components/ui/Button";
+import { sanityFetch } from "@/lib/sanity/fetch";
+import { HOME_PAGE_QUERY, SITE_SETTINGS_QUERY } from "@/lib/sanity/queries";
+import type { HomePage, SiteSettings } from "@/lib/sanity/types";
+import { Hero } from "@/components/sections/Hero";
+import { GuidingQuestions } from "@/components/sections/GuidingQuestions";
+import { PracticeSection } from "@/components/sections/PracticeSection";
+import { FoundedAndLed } from "@/components/sections/FoundedAndLed";
+import { MeetReign } from "@/components/sections/MeetReign";
+import { WhoIsThisFor } from "@/components/sections/WhoIsThisFor";
+import { Newsletter } from "@/components/sections/Newsletter";
+import { Connect } from "@/components/sections/Connect";
 
 /**
- * Phase 0 foundation skeleton. Proves the token system renders end to end —
- * Caslon display heading, Hanken body copy, and all three Button variants.
- * The real home sections (Hero → Who is this for) are built in Phase 2.
+ * Home — the single-scroll page. Server Component: fetches the published
+ * homePage + siteSettings from Sanity and hands each section its slice of data.
+ * Sections render gracefully when their fields are empty (no assets seeded).
  */
-export default function Home() {
+export default async function Home() {
+  // siteSettings is also fetched in the layout (for Nav/Footer); we re-fetch it
+  // here for the Connect section's social + contactEmail. Next dedupes identical
+  // fetch-backed requests within a render, so this is one network call.
+  const [home, settings] = await Promise.all([
+    sanityFetch<HomePage>(HOME_PAGE_QUERY),
+    sanityFetch<SiteSettings>(SITE_SETTINGS_QUERY),
+  ]);
+
+  if (!home) return null;
+
   return (
-    <Section id="practice" aria-label="Foundation preview">
-      <Container className="flex flex-col gap-stack">
-        <p className="font-sans text-label-md uppercase text-secondary">
-          Phase 0 — Foundation
-        </p>
-
-        <h1 className="max-w-3xl font-display text-display-lg-mobile text-on-surface md:text-display-lg">
-          Ancestral wisdom, modern leadership.
-        </h1>
-
-        <p className="max-w-2xl font-sans text-body-lg text-on-surface-variant">
-          This is the foundation layer for rickireign.com — design tokens,
-          typography, layout primitives, and base components. A calm, premium
-          surface built for breath, presence, and somatic rhythm.
-        </p>
-
-        <div className="mt-stack flex flex-wrap items-center gap-6">
-          <Button variant="primary" href="#connect">
-            Book a Discovery Call
-          </Button>
-          <Button variant="secondary" href="#about">
-            Meet Reign
-          </Button>
-          <Button variant="tertiary" href="#founded">
-            Explore her work
-          </Button>
-        </div>
-      </Container>
-    </Section>
+    <>
+      <Hero data={home.hero} />
+      <GuidingQuestions questions={home.guidingQuestions} />
+      <PracticeSection data={home.practice} />
+      <FoundedAndLed data={home.foundedAndLed} />
+      <MeetReign data={home.about} />
+      <WhoIsThisFor data={home.whoIsThisFor} />
+      <Newsletter data={home.newsletter} />
+      <Connect
+        data={home.connect}
+        social={settings?.social}
+        contactEmail={settings?.contactEmail}
+      />
+    </>
   );
 }

@@ -177,6 +177,15 @@
   z-index: 100; /* above the sticky nav so the skip link is reachable */
 }
 
+/* Ambient elevation (DESIGN.md §Elevation): long blur, very low opacity,
+   tinted with the primary forest green so depth feels "grounded" rather than
+   like a hard drop shadow. Used on elevated cards (Current Focus, business). */
+@utility shadow-ambient {
+  box-shadow:
+    0 24px 60px -24px rgba(45, 64, 50, 0.18),
+    0 6px 16px -10px rgba(45, 64, 50, 0.1);
+}
+
 /* Base element defaults — off-white "breath" background + grounded body text. */
 body {
   background-color: var(--color-surface);

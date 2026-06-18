@@ -3,17 +3,23 @@
 import { useState } from "react";
 import { Container } from "@/components/layout/Container";
 import { cn } from "@/lib/cn";
+import type { SiteSettings } from "@/lib/sanity/types";
 
 /**
- * Placeholder nav links. Real nav data comes from Sanity `siteSettings.nav`
- * in a later phase; these in-page anchors keep the foundation navigable.
+ * Fallback nav used only when Sanity `siteSettings.nav` is empty, so the header
+ * is never link-less. Real data is passed in from the server layout.
  */
-const NAV_LINKS = [
-  { label: "The Practice", href: "#practice" },
-  { label: "Founded & Led", href: "#founded" },
-  { label: "About", href: "#about" },
-  { label: "Connect", href: "#connect" },
-] as const;
+const FALLBACK_LINKS = [
+  { _key: "f1", label: "The Practice", anchor: "#practice" },
+  { _key: "f2", label: "Founded & Led", anchor: "#founded" },
+  { _key: "f3", label: "About", anchor: "#about" },
+  { _key: "f4", label: "Connect", anchor: "#connect" },
+];
+
+interface NavProps {
+  wordmark?: string;
+  links?: SiteSettings["nav"];
+}
 
 const linkClasses = cn(
   "font-sans text-label-md uppercase text-on-surface-variant",
@@ -22,8 +28,9 @@ const linkClasses = cn(
   "focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm",
 );
 
-export function Nav() {
+export function Nav({ wordmark, links }: NavProps) {
   const [open, setOpen] = useState(false);
+  const navLinks = links && links.length > 0 ? links : FALLBACK_LINKS;
 
   return (
     <header
@@ -44,14 +51,14 @@ export function Nav() {
             "focus-visible:ring-offset-surface",
           )}
         >
-          Ricki Reign
+          {wordmark ?? "Ricki Reign"}
         </a>
 
         {/* Desktop links */}
         <ul className="hidden items-center gap-8 md:flex">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <a href={link.href} className={linkClasses}>
+          {navLinks.map((link) => (
+            <li key={link._key}>
+              <a href={link.anchor} className={linkClasses}>
                 {link.label}
               </a>
             </li>
@@ -88,10 +95,10 @@ export function Nav() {
       >
         <Container className="py-4">
           <ul className="flex flex-col gap-4">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
+            {navLinks.map((link) => (
+              <li key={link._key}>
                 <a
-                  href={link.href}
+                  href={link.anchor}
                   onClick={() => setOpen(false)}
                   className={cn(linkClasses, "block py-1")}
                 >
