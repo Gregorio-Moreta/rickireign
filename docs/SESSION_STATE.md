@@ -7,7 +7,7 @@ _Transient doc. Reflects state as Phase 3 (Forms & legal) is delivered (2026-06-
 **Phases 0–3 are complete.** 0/1/2 are merged to `main`; **Phase 3 is delivered via PR #5 (`003-forms-and-legal` → `main`)** and bundles this handoff, so `main` is Phase-4-ready the moment #5 merges.
 
 - Phase 3 passed code review (`code-reviewer`: APPROVE WITH NITS, zero MUST-FIX). Applied: CR/LF guard on the contact name (header-injection), proxy-aware `publicOrigin()` for the DOI redirect, a shared `FALLBACK_CONTACT_EMAIL` constant, consent banner `role="region"`.
-- **Both builds pass locally** (`npm run build` + `npx opennextjs-cloudflare build`). lint + tsc clean.
+- **Both builds pass locally** (`npm run build` + `npx opennextjs-cloudflare build`). lint + tsc clean. **Both CI deploys green for commit `4e1483e`:** Vercel preview ● Ready; Cloudflare Workers Build outcome **success**.
 - **Live-tested end-to-end:** the newsletter form (real browser) → `/api/newsletter` → Turnstile → Brevo DOI → confirmation email **delivered** to the test inbox (Brevo events confirmed). API failure paths return correct 400s; honeypot silently 200s.
 - Branches kept (no-delete rule): `000-foundation`, `001-content-model`, `002-home`, `docs/phase-2-handoff`, `003-forms-and-legal`, `main`.
 
@@ -32,7 +32,7 @@ git push -u origin 004-blog
 ## Deploy env status (important)
 
 - **Vercel:** ALL Phase 3 env set via CLI for **production** + the **`003-forms-and-legal` preview branch** — `BREVO_API_KEY`, `BREVO_LIST_ID` (3), `BREVO_DOI_TEMPLATE_ID` (1), `BREVO_SENDER_EMAIL`, `TURNSTILE_SECRET_KEY` (secrets `--sensitive`), `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_CALENDLY_URL`. (Public keys also default in `lib/env.ts`.)
-- **Cloudflare:** the public keys default in code (no build var needed). **Runtime secrets still TODO** — `wrangler` isn't authed locally; run `npx wrangler login` then `wrangler secret put` for `BREVO_API_KEY` `BREVO_LIST_ID` `BREVO_DOI_TEMPLATE_ID` `BREVO_SENDER_EMAIL` `TURNSTILE_SECRET_KEY`, or add them in the dashboard as **Secrets**. Until then, forms won't work on the CF deploy (build stays green).
+- **Cloudflare:** the public keys default in code (no build var needed). **Runtime secrets SET** — `BREVO_API_KEY` `BREVO_LIST_ID` `BREVO_DOI_TEMPLATE_ID` `BREVO_SENDER_EMAIL` `TURNSTILE_SECRET_KEY` pushed via `wrangler secret put` (account `gregoriomoreta4@gmail.com`, confirmed in `wrangler secret list`). They persist across the `npm run deploy` (encrypted secrets aren't wiped), so they go live when `main` redeploys on merge. `wrangler` is now authed locally (OAuth).
 
 ## Phase 4 — Blog (the goal)
 
@@ -45,7 +45,6 @@ Per PLAN.md §3, §4 (`post`/`author` schemas already exist), §7. Routes `/blog
 - **Reading-time / dates:** format `publishedAt` server-side; keep it timezone-stable.
 
 ## Open questions / deferred (still matter)
-- **CF runtime secrets** — see Deploy env above (the one outstanding setup step).
 - **Brevo prod sender** — verify a `rickireign.com` domain sender and swap `BREVO_SENDER_EMAIL` off the gmail before real launch (DOI + contact emails currently send FROM the gmail).
 - **Calendly** URL is still a personal test link (`gregorioe-moreta/discovery-call`) — committed as the `lib/env.ts` default; swap for Ricki's real link.
 - **contactEmail** (PLAN open #3): confirm `welcome@rickireign.com` vs `hello@`.
