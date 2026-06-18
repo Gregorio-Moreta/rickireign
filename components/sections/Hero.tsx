@@ -1,6 +1,6 @@
 import { Section } from "@/components/layout/Section";
 import { Container } from "@/components/layout/Container";
-import { Button } from "@/components/ui/Button";
+import { CtaButton } from "@/components/ui/CtaButton";
 import { SanityImage } from "@/components/ui/SanityImage";
 import type { Hero as HeroData } from "@/lib/sanity/types";
 
@@ -35,13 +35,12 @@ export function Hero({ data }: { data: HeroData | undefined }) {
             {ctas && ctas.length > 0 ? (
               <div className="mt-2 flex flex-wrap items-center gap-4">
                 {ctas.map((cta) => (
-                  <Button
+                  <CtaButton
                     key={cta._key}
-                    href={cta.href}
-                    variant={cta.style ?? "primary"}
-                  >
-                    {cta.label}
-                  </Button>
+                    label={cta.label}
+                    target={cta.href}
+                    style={cta.style}
+                  />
                 ))}
               </div>
             ) : null}

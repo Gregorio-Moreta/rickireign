@@ -1,6 +1,6 @@
 import { Section } from "@/components/layout/Section";
 import { Container } from "@/components/layout/Container";
-import { Button } from "@/components/ui/Button";
+import { CtaButton } from "@/components/ui/CtaButton";
 import type { Practice, PracticeItem } from "@/lib/sanity/types";
 
 /**
@@ -40,9 +40,7 @@ export function PracticeSection({ data }: { data: Practice | undefined }) {
 
         {data.ctaLabel && data.ctaTarget ? (
           <div className="mt-2">
-            <Button href={data.ctaTarget} variant="primary">
-              {data.ctaLabel}
-            </Button>
+            <CtaButton label={data.ctaLabel} target={data.ctaTarget} style="primary" />
           </div>
         ) : null}
       </Container>

@@ -1,13 +1,13 @@
 import { Section } from "@/components/layout/Section";
 import { Container } from "@/components/layout/Container";
-import { Button } from "@/components/ui/Button";
+import { ContactForm } from "@/components/ui/ContactForm";
 import { SocialLinks } from "@/components/ui/SocialLinks";
 import type { SimpleSection, SocialLink } from "@/lib/sanity/types";
 
 /**
- * Section 8 — Connect. Real social links and a direct-email CTA work now; the
- * full contact form (Zod + Turnstile + Brevo transactional) is Phase 3. This is
- * the home anchor for "#connect" used by several CTAs and the nav.
+ * Section 8 — Connect. The contact form (Zod + Turnstile + Brevo transactional)
+ * with a direct-email fallback and social links. Home anchor for "#connect",
+ * used by several CTAs and the nav.
  */
 export function Connect({
   data,
@@ -35,17 +35,27 @@ export function Connect({
             </p>
           ) : null}
 
-          {contactEmail ? (
-            <Button href={`mailto:${contactEmail}`} variant="primary">
-              Email Ricki
-            </Button>
-          ) : null}
+          <ContactForm />
 
-          <SocialLinks
-            links={social}
-            className="mt-2 justify-center"
-            linkClassName="text-on-surface-variant hover:bg-surface-container hover:text-primary-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-          />
+          <div className="mt-2 flex flex-col items-center gap-4">
+            {contactEmail ? (
+              <p className="font-sans text-body-md text-on-surface-variant">
+                Prefer email?{" "}
+                <a
+                  href={`mailto:${contactEmail}`}
+                  className="text-secondary underline underline-offset-4 hover:text-luminous-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                >
+                  {contactEmail}
+                </a>
+              </p>
+            ) : null}
+
+            <SocialLinks
+              links={social}
+              className="justify-center"
+              linkClassName="text-on-surface-variant hover:bg-surface-container hover:text-primary-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+            />
+          </div>
         </div>
       </Container>
     </Section>

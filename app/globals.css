@@ -173,6 +173,9 @@
 @utility layer-nav {
   z-index: 50;
 }
+@utility layer-banner {
+  z-index: 60; /* consent banner — above the sticky nav (50), below the skip link */
+}
 @utility layer-skip-link {
   z-index: 100; /* above the sticky nav so the skip link is reachable */
 }

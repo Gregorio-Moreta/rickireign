@@ -3,6 +3,7 @@ import { caslon, hanken } from "@/lib/fonts";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { Analytics } from "@/components/analytics/Analytics";
+import { ConsentBanner } from "@/components/analytics/ConsentBanner";
 import { cn } from "@/lib/cn";
 import { sanityFetch } from "@/lib/sanity/fetch";
 import { SITE_SETTINGS_QUERY } from "@/lib/sanity/queries";
@@ -64,6 +65,7 @@ export default async function RootLayout({
           social={settings?.social}
           footerText={settings?.footerText}
         />
+        <ConsentBanner />
         <Analytics />
       </body>
     </html>

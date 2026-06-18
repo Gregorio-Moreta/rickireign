@@ -1,22 +1,28 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { publicEnv } from "@/lib/env";
+import { CONSENT_EVENT, readConsent, type ConsentValue } from "@/lib/consent";
 
 /**
- * GA4 loader, structured for the Phase 3 consent banner.
- *
- * Renders the GA script ONLY when a measurement id is configured AND consent
- * has been granted. The consent flag is hard-coded `true` here so the wiring
- * is in place; the real check drops in during Phase 3 without touching layout.
+ * GA4 loader. Renders the GA script ONLY when a measurement id is configured
+ * AND the visitor has granted consent (global opt-in). Reads the consent cookie
+ * on mount and re-checks whenever the ConsentBanner broadcasts a change, so
+ * accepting loads GA immediately without a reload.
  */
 export function Analytics() {
   const gaId = publicEnv.gaMeasurementId;
+  const [consent, setConsent] = useState<ConsentValue | null>(null);
 
-  // Phase 3: gate on consent banner (replace with the real consent state).
-  const consentGranted = true;
+  useEffect(() => {
+    const sync = () => setConsent(readConsent());
+    sync();
+    window.addEventListener(CONSENT_EVENT, sync);
+    return () => window.removeEventListener(CONSENT_EVENT, sync);
+  }, []);
 
-  if (!gaId || !consentGranted) {
+  if (!gaId || consent !== "granted") {
     return null;
   }
 

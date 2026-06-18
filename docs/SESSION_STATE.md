@@ -1,69 +1,58 @@
-# Session State — handoff into Phase 3 (Forms & legal)
+# Session State — handoff into Phase 4 (Blog)
 
-_Transient doc. Reflects state as Phase 2 (Home) is delivered (2026-06-18). When Phase 3 ships, rewrite this for Phase 4. Durable facts/rules live in `CLAUDE.md`._
+_Transient doc. Reflects state as Phase 3 (Forms & legal) is delivered (2026-06-18). When Phase 4 ships, rewrite this for Phase 5. Durable facts/rules live in `CLAUDE.md`._
 
 ## Where we are
 
-**Phases 0 (Foundation), 1 (Content model), and 2 (Home) are complete.** 0 and 1 are merged to `main`; **Phase 2 is delivered via PR #4 (`002-home` → `main`)** and bundles this handoff, so `main` is Phase-3-ready the moment #4 merges.
+**Phases 0–3 are complete.** 0/1/2 are merged to `main`; **Phase 3 is delivered via PR #5 (`003-forms-and-legal` → `main`)** and bundles this handoff, so `main` is Phase-4-ready the moment #5 merges.
 
-- Phase 2 passed code review (`code-reviewer`: APPROVE WITH NITS — all SHOULD-FIX applied: `sanityFetch` now `T | null`, CSP comment corrected).
-- **Both deploys are green.** Vercel `https://rickireign.vercel.app` and Cloudflare `https://rickireign.gregoriomoreta4.workers.dev`. Cloudflare was verified via Workers Builds: commit `02c7ddd` build outcome **success** (earlier Phase 2 commits failed until the env-defaults fix — see below).
-- Branches kept (no-delete rule): `000-foundation`, `001-content-model`, `002-home`, `docs/phase-2-handoff`, `main` — all on local + remote.
+- Phase 3 passed code review (`code-reviewer`: APPROVE WITH NITS, zero MUST-FIX). Applied: CR/LF guard on the contact name (header-injection), proxy-aware `publicOrigin()` for the DOI redirect, a shared `FALLBACK_CONTACT_EMAIL` constant, consent banner `role="region"`.
+- **Both builds pass locally** (`npm run build` + `npx opennextjs-cloudflare build`). lint + tsc clean.
+- **Live-tested end-to-end:** the newsletter form (real browser) → `/api/newsletter` → Turnstile → Brevo DOI → confirmation email **delivered** to the test inbox (Brevo events confirmed). API failure paths return correct 400s; honeypot silently 200s.
+- Branches kept (no-delete rule): `000-foundation`, `001-content-model`, `002-home`, `docs/phase-2-handoff`, `003-forms-and-legal`, `main`.
 
-### First steps in Phase 3
+### First steps in Phase 4
 ```bash
-git checkout main && git pull origin main      # after PR #4 merges
-git checkout -b 003-forms-and-legal
-git push -u origin 003-forms-and-legal
+git checkout main && git pull origin main      # after PR #5 merges
+git checkout -b 004-blog
+git push -u origin 004-blog
 ```
 
-## What Phase 2 delivered (in `main` once #4 merges)
+## What Phase 3 delivered (in `main` once #5 merges)
 
-- **Home sections 1–8 wired to Sanity** (`app/page.tsx`, Server Component): Hero (+ Current Focus card), Guiding Questions, The Practice (+ OfferingCard), Founded & Led (+ BusinessCard, hardened external links), Meet Reign (+ Portable Text body, collapses to one column when no portrait), Who is this for? (dark `earth-charcoal` band), and **presentational shells** for Join the list + Connect.
-- **Read layer**: `lib/sanity/fetch.ts` (`sanityFetch<T>` → `Promise<T | null>`, 60s time-based ISR) and `lib/sanity/types.ts` (hand-written content types — **no typegen**; keep in sync with `queries.ts`).
-- **Components**: `components/sections/*` (8 sections); `components/ui/SanityImage.tsx` (next/image via `urlFor`, optional static `fallbackSrc`); `components/ui/SocialLinks.tsx` (shared Footer + Connect, platform→icon map). `Nav`/`Footer` now consume `siteSettings` with fallbacks.
-- **Hero portrait**: `public/ricki-reign.jpg` (432×432, the only real asset) shown via the fallback; a Sanity `hero.portrait` upload overrides it with **no code change**. `about.portrait` is still empty (Meet Reign renders photo-less, single column).
-- **Config**: `next.config.ts` adds `images.remotePatterns` for `cdn.sanity.io` and the CSP `img-src` now actively allows it; `app/globals.css` gains a `shadow-ambient` utility (DESIGN.md elevation).
-- **`lib/env.ts`**: the public Sanity `projectId` (`zsuyhr45`) and `dataset` (`production`) are now **committed defaults** (env still overrides) — see the CF gotcha below.
+- **Newsletter** (`components/ui/NewsletterForm.tsx` in the `Newsletter` shell) → `POST /api/newsletter`: Zod → Turnstile → **Brevo double opt-in** (list `3`, DOI template `1`), generic success (never reveals membership), honeypot-protected.
+- **Contact** (`components/ui/ContactForm.tsx` built into `Connect`) → `POST /api/contact`: Zod → Turnstile → Brevo **transactional** email to `siteSettings.contactEmail` (fallback `welcome@rickireign.com`), visitor as reply-to, HTML-escaped, CR/LF-guarded name.
+- **Server libs** (server-only, secrets from `process.env`): `lib/validation.ts` (Zod + honeypot), `lib/turnstile.ts` (fails closed), `lib/brevo.ts` (DOI + transactional + escape), `lib/http.ts` (`clientIp`, `publicOrigin`), `lib/constants.ts`.
+- **Turnstile** widget (`components/ui/Turnstile.tsx`) on both forms; renders nothing if no site key.
+- **Calendly** — `components/ui/BookingButton.tsx` (lazy popup) via `components/ui/CtaButton.tsx`; "Book a Discovery Call" CTAs (Hero/Practice/Who) open it, falling back to `#connect`.
+- **Legal** — `app/privacy/page.tsx`, `app/terms/page.tsx` (hardcoded, brand-styled via `components/ui/Prose.tsx`, "last updated" June 18 2026). Footer already links them.
+- **Consent** — `components/analytics/ConsentBanner.tsx` (global opt-in, cookie `rr-consent`); `Analytics.tsx` loads GA **only after Accept**, re-syncs on the consent event (`lib/consent.ts`).
+- **Config** — `next.config.ts` CSP grown for Turnstile + Calendly (+ explicit `frame-src`); `lib/env.ts` adds `turnstileSiteKey` + `calendlyUrl` (committed public defaults); `.env.example` documents `BREVO_SENDER_EMAIL`; `app/globals.css` adds `layer-banner`. New dep: `zod`.
 
-## Phase 3 — Forms & legal (the goal)
+## Deploy env status (important)
 
-Per PLAN.md §6 + §7. The Newsletter and Connect **shells already exist** — Phase 3 swaps in the real logic (remove `disabled`, attach the action) rather than building UI from scratch.
+- **Vercel:** ALL Phase 3 env set via CLI for **production** + the **`003-forms-and-legal` preview branch** — `BREVO_API_KEY`, `BREVO_LIST_ID` (3), `BREVO_DOI_TEMPLATE_ID` (1), `BREVO_SENDER_EMAIL`, `TURNSTILE_SECRET_KEY` (secrets `--sensitive`), `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_CALENDLY_URL`. (Public keys also default in `lib/env.ts`.)
+- **Cloudflare:** the public keys default in code (no build var needed). **Runtime secrets still TODO** — `wrangler` isn't authed locally; run `npx wrangler login` then `wrangler secret put` for `BREVO_API_KEY` `BREVO_LIST_ID` `BREVO_DOI_TEMPLATE_ID` `BREVO_SENDER_EMAIL` `TURNSTILE_SECRET_KEY`, or add them in the dashboard as **Secrets**. Until then, forms won't work on the CF deploy (build stays green).
 
-1. **Newsletter** — `POST /api/newsletter` → Zod validation → Turnstile verify → **Brevo double opt-in** (create contact, confirmation email; only confirmed contacts stored) → generic success (don't reveal whether the email already exists). Wire into `components/sections/Newsletter.tsx`.
-2. **Contact** — `POST /api/contact` → Zod → Turnstile → Brevo **transactional** email to `siteSettings.contactEmail` (`welcome@rickireign.com`). Build the contact form into `components/sections/Connect.tsx` (currently socials + email CTA only).
-3. **Turnstile** on both forms (`@cloudflare/turnstile` widget; site key public, secret server-only).
-4. **Legal** — `/privacy` + `/terms` route pages (Footer already links them) + a **cookie/consent banner** that gates GA (the consent seam is already in place from Phase 0; gating is Phase 3).
-5. **Calendly** — "Book a Discovery Call" CTAs (currently `#connect`) open a Calendly popup/embed via `NEXT_PUBLIC_CALENDLY_URL`.
+## Phase 4 — Blog (the goal)
 
-### Entry point & order of work
-1. Branch `003-forms-and-legal` (above).
-2. **Env** — add server secrets `BREVO_API_KEY`, `TURNSTILE_SECRET_KEY`; public `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_CALENDLY_URL`. Document all in `.env.example`. On Cloudflare: **runtime secrets via `wrangler secret put`** (encrypted, NOT build vars); the **public** keys need to be **Workers Builds → Build vars** (or, if truly public-constant, defaulted in `lib/env.ts` like the Sanity ones).
-3. **Route handlers** `app/api/newsletter/route.ts`, `app/api/contact/route.ts` — server-only, validate + authorize on the server, never trust client input.
-4. **Wire forms** into the existing shells.
-5. **`/privacy`, `/terms`** + consent banner.
-6. `code-reviewer`, then PR (no merge, no branch delete).
+Per PLAN.md §3, §4 (`post`/`author` schemas already exist), §7. Routes `/blog` + `/blog/[slug]`, `BlogCard`, Portable Text rendering for `post.body`, cover images via `SanityImage`, list ordered by `publishedAt`. Wire SEO/OG per post. Decide content direction with Ricki (PLAN open #5) before building.
 
-## Gotchas specific to Phase 3 (read before coding)
-
-- **Secrets are server-only.** `BREVO_API_KEY` and `TURNSTILE_SECRET_KEY` are never `NEXT_PUBLIC_*`, never committed. They must NOT live in `lib/env.ts` (that file is client-safe / public-only). Read them directly from `process.env` inside the route handlers.
-- **Cloudflare: build vars vs runtime vars (learned the hard way in Phase 2).** `next build` **inlines** `NEXT_PUBLIC_*` at build time, so those must be set as **Workers Builds → Build → Variables** (a separate section that the `wrangler.jsonc` deploy does NOT wipe). Runtime-only values (Brevo/Turnstile secrets) go via `wrangler secret put` / `wrangler.jsonc vars` (the dashboard "runtime" Variables section gets wiped on every `npm run deploy`). The Sanity `projectId`/`dataset` no longer need build vars (defaulted in `lib/env.ts`); the new public Turnstile/Calendly keys WILL — or default them too.
-- **CSP must grow.** `next.config.ts` currently allows GA + `cdn.sanity.io`. Phase 3 must add: Turnstile (`script-src` + `frame-src https://challenges.cloudflare.com`), Calendly (`frame-src https://*.calendly.com`, `script-src https://assets.calendly.com`). The reference list is already in the `next.config.ts` comment. `form-action 'self'` is already set (fine for same-origin POSTs to `/api/*`).
-- **Verify BOTH builds before pushing** (`npm run build` + `npx opennextjs-cloudflare build`) — Phase 2 proved they diverge, and the Cloudflare Workers Builds MCP (`cloudflare-builds`) can confirm the deployed build outcome.
+## Gotchas specific to Phase 4 (read before coding)
+- **`post`/`author` schemas are already in the Studio** (Phase 1) — likely no schema change, but confirm fields against `studio/schemaTypes`. Seed a couple of posts via the Sanity MCP (publish `author` before `post`).
+- **Portable Text:** `next-sanity` exports `PortableText`; the Meet Reign section (`about.body`) already renders it — reuse that pattern + component map.
+- **ISR/revalidation** is still 60s time-based (no webhook). For a blog, consider the publish webhook (deferred from Phase 2) so new posts appear promptly.
+- **Reading-time / dates:** format `publishedAt` server-side; keep it timezone-stable.
 
 ## Open questions / deferred (still matter)
+- **CF runtime secrets** — see Deploy env above (the one outstanding setup step).
+- **Brevo prod sender** — verify a `rickireign.com` domain sender and swap `BREVO_SENDER_EMAIL` off the gmail before real launch (DOI + contact emails currently send FROM the gmail).
+- **Calendly** URL is still a personal test link (`gregorioe-moreta/discovery-call`) — committed as the `lib/env.ts` default; swap for Ricki's real link.
+- **contactEmail** (PLAN open #3): confirm `welcome@rickireign.com` vs `hello@`.
+- **Real content + assets** (PLAN open #6), **section names** (open #1), **Patreon** (open #4), **Sanity revalidation webhook + draft/preview** — all still deferred.
+- **No test runner** — the project has no `test` script; the security-critical Phase 3 invariants (fail-closed Turnstile, honeypot, no-enumeration, HTML escape) are covered only by manual/live testing. Phase 5 adds Playwright; consider unit coverage for `lib/validation`/`lib/brevo` if a runner lands sooner.
 
-- **Real content + assets** (PLAN.md open #6): seeded copy and social URLs are plausible placeholders Ricki refines in the Studio. Only one real photo so far (`public/ricki-reign.jpg`, 432×432 — a higher-res original is welcome). A Sanity `about.portrait` upload would activate the Meet Reign two-column layout.
-- **Section names** (PLAN.md open #1): "The Practice" / "Founded & Led" are placeholders — they come from Sanity (`homePage.practice.title` / `foundedAndLed.title`), never hard-coded.
-- **contactEmail** (PLAN.md open #3): confirm `welcome@rickireign.com` vs `hello@`.
-- **Calendly** URL in `.env.local` is a personal test link.
-- **Patreon** (PLAN.md open #4): `social.platform` enum + `SocialLinks` already support it; add the URL once live.
-- **Sanity revalidation webhook** + **draft/preview mode + server-only read token**: still deferred (60s ISR for now).
-- **`wrangler.jsonc` `compatibility_date` = 2025-09-01**: wrangler warns it's old; bump when convenient (low priority).
-- **`client.ts` throw message** is now slightly stale (defaults always resolve, so it can't fire) — harmless, tidy whenever.
-
-## If you're starting Phase 3 cold, know this
-- Production on `main` is green on both targets; the content is real and queryable now (`*[_type=="homePage"][0]`, `*[_type=="siteSettings"][0]` via the Sanity MCP, `perspective: "published"`).
-- The Newsletter/Connect **shells are designed to swap** — Phase 3 is mostly backend (route handlers + integrations) with thin UI on top.
-- Schema changes need `cd studio && npm run schema:deploy`; Studio runs at `:3333` (`cd studio && npm run dev`).
-- Subagents run in `.claude/worktrees/` and can't do git/network writes — consolidate their output and run git/`gh`/deploy from the main session. Never delete branches. See `CLAUDE.md` for the full rule set + Phase 0–2 gotchas.
+## If you're starting Phase 4 cold, know this
+- Production on `main` is green on both targets; content is real and queryable (`*[_type=="homePage"][0]`, `*[_type=="siteSettings"][0]`, `*[_type=="post"]`) via the Sanity MCP (`perspective: "published"`).
+- Schema changes need `cd studio && npm run schema:deploy`; Studio runs at `:3333`.
+- Subagents run in `.claude/worktrees/` and can't do git/network writes — consolidate and run git/`gh`/deploy from the main session. Never delete branches. See `CLAUDE.md` for the full rule set + Phase 0–3 gotchas.
