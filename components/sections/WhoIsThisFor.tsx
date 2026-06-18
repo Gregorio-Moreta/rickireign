@@ -1,6 +1,6 @@
 import { Section } from "@/components/layout/Section";
 import { Container } from "@/components/layout/Container";
-import { Button } from "@/components/ui/Button";
+import { CtaButton } from "@/components/ui/CtaButton";
 import type { WhoIsThisFor as WhoIsThisForData } from "@/lib/sanity/types";
 
 /**
@@ -40,13 +40,12 @@ export function WhoIsThisFor({ data }: { data: WhoIsThisForData | undefined }) {
 
         {data.ctaLabel && data.ctaTarget ? (
           <div className="mt-2">
-            <Button
-              href={data.ctaTarget}
-              variant="primary"
+            <CtaButton
+              label={data.ctaLabel}
+              target={data.ctaTarget}
+              style="primary"
               className="bg-primary-fixed text-on-primary-fixed hover:bg-primary-fixed-dim focus-visible:ring-primary-fixed focus-visible:ring-offset-earth-charcoal"
-            >
-              {data.ctaLabel}
-            </Button>
+            />
           </div>
         ) : null}
       </Container>

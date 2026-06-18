@@ -78,7 +78,14 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Cloudflare:** Worker `rickireign` (prod `https://rickireign.gregoriomoreta4.workers.dev`). Dashboard deploy command = `npm run deploy`.
 
 ## Build phases (docs/PLAN.md §7)
-0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (sections wired to Sanity; PR #4) · **3 Forms & legal** (newsletter DOI + contact + Turnstile, `/privacy` `/terms`, consent banner) · 4 Blog · 5 Verify & ship.
+0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (PR #4) · 3 Forms & legal ✓ (newsletter DOI + contact + Turnstile, `/privacy` `/terms`, consent banner; PR #5) · **4 Blog** · 5 Verify & ship.
+
+## Phase 3 facts (Forms & legal — don't re-learn)
+- **Brevo:** account `gregorioe.moreta@gmail.com`. Newsletter list id `3` ("Newsletter — rickireign.com"); DOI template id `1` (tagged `optin`, confirm button → `{{ doubleoptin }}` — required for forms hosted OUTSIDE Brevo). Transactional sender = `BREVO_SENDER_EMAIL` (currently the verified gmail; verify a `rickireign.com` domain sender for prod). Server secrets read straight from `process.env` in `lib/{brevo,turnstile}.ts` (imported only by `app/api/{newsletter,contact}/route.ts`), never `lib/env.ts`.
+- **Turnstile:** dev/CI used Cloudflare's official TEST keys (always-pass). Real widget keys are now live; the **public site key + Calendly URL are committed as defaults in `lib/env.ts`** (public values — same default-or-build-var rule as Sanity), so Cloudflare needs no build vars for them. The **secret** key is server-only.
+- **Deploy env (both targets set):** Vercel env (secrets + public) set via `vercel env add` (CLI authed) for **production** and the **preview branch** — preview needs the branch arg (`vercel env add NAME preview <branch> --value … --yes --force`); plain `preview` refuses to auto-pick "all branches" non-interactively. **Cloudflare runtime secrets** (`BREVO_*`, `TURNSTILE_SECRET_KEY`) set via `wrangler secret put` after `wrangler login` (account `gregoriomoreta4@gmail.com`) — they persist across the wrangler.jsonc deploy (encrypted *secrets* aren't wiped; plaintext *vars* are). `wrangler` is **not** authed in CI (deploys run in Workers Builds), so secret changes need a local `wrangler login` or the dashboard (Settings → Variables and Secrets → type *Secret*).
+- **CSP** grew for Turnstile (`challenges.cloudflare.com` script/frame/connect) + Calendly (`assets.calendly.com` script/style, `*.calendly.com` frame/img). `frame-src` is now explicit (was falling back to `default-src 'self'`).
+- **Booking CTAs** open Calendly by **label match** (`/discovery call/i` in `CtaButton`), NOT a Sanity content/schema change — the live site shares one dataset, so CTAs must stay valid anchors there too; unmatched labels fall back to the `#connect` anchor.
 
 ## Don't
 Don't add Supabase (this is Sanity). Don't invent brand values (DESIGN.md). Don't embed the Studio. Don't expand scope past the approved plan without checking in. Don't reach for a dependency the stack already covers.

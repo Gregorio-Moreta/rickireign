@@ -2,24 +2,28 @@ import path from "node:path";
 import type { NextConfig } from "next";
 
 /**
- * Content-Security-Policy. Active third parties: Google Analytics (via
- * @next/third-parties) and the Sanity image CDN (img-src cdn.sanity.io —
- * Phase 2, also backing next/image's remotePatterns below). next/font
- * self-hosts fonts, so fonts are effectively 'self'; the Google Fonts origins
- * are listed per the plan and are harmless.
+ * Content-Security-Policy. Active third parties:
+ *   Google Analytics (via @next/third-parties)
+ *   Sanity image CDN (img-src cdn.sanity.io — Phase 2)
+ *   Cloudflare Turnstile (Phase 3 — forms): script + iframe challenge from
+ *     challenges.cloudflare.com; siteverify is server-to-server (not CSP-gated).
+ *   Calendly (Phase 3 — booking popup): widget script from assets.calendly.com,
+ *     scheduling iframe from *.calendly.com.
+ * next/font self-hosts fonts, so fonts are effectively 'self'; the Google Fonts
+ * origins are listed per the plan and are harmless. Form POSTs go to same-origin
+ * /api/* so `form-action 'self'` stays.
  *
  * Still deferred (kept here as a reference — NOT active until their phase):
  *   Sanity API:           connect-src https://*.api.sanity.io https://*.apicdn.sanity.io
- *   Cloudflare Turnstile: script-src / frame-src https://challenges.cloudflare.com  (Phase 3)
- *   Calendly:             frame-src https://*.calendly.com ; script-src https://assets.calendly.com  (Phase 3)
  */
 const cspDirectives = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://*.googletagmanager.com https://*.google-analytics.com",
-  "connect-src 'self' https://*.google-analytics.com https://*.googletagmanager.com https://region1.google-analytics.com",
-  "img-src 'self' data: https://cdn.sanity.io https://*.google-analytics.com https://*.googletagmanager.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "script-src 'self' 'unsafe-inline' https://*.googletagmanager.com https://*.google-analytics.com https://challenges.cloudflare.com https://assets.calendly.com",
+  "connect-src 'self' https://*.google-analytics.com https://*.googletagmanager.com https://region1.google-analytics.com https://challenges.cloudflare.com",
+  "img-src 'self' data: https://cdn.sanity.io https://*.google-analytics.com https://*.googletagmanager.com https://*.calendly.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com",
   "font-src 'self' https://fonts.gstatic.com",
+  "frame-src 'self' https://challenges.cloudflare.com https://*.calendly.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
