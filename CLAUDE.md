@@ -78,7 +78,7 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Cloudflare:** Worker `rickireign` (prod `https://rickireign.gregoriomoreta4.workers.dev`). Dashboard deploy command = `npm run deploy`.
 
 ## Build phases (docs/PLAN.md §7)
-0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (PR #4) · 3 Forms & legal ✓ (newsletter DOI + contact + Turnstile, `/privacy` `/terms`, consent banner; PR #5) · **4 Blog** · 5 Verify & ship.
+0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (PR #4) · 3 Forms & legal ✓ (PR #5 merged; fix/hardening round in `fix/phase-3-forms-legal`) · **4 Blog** · 5 Verify & ship.
 
 ## Phase 3 facts (Forms & legal — don't re-learn)
 - **Brevo:** account `gregorioe.moreta@gmail.com`. Newsletter list id `3` ("Newsletter — rickireign.com"); DOI template id `1` (tagged `optin`, confirm button → `{{ doubleoptin }}` — required for forms hosted OUTSIDE Brevo). Transactional sender = `BREVO_SENDER_EMAIL` (currently the verified gmail; verify a `rickireign.com` domain sender for prod). Server secrets read straight from `process.env` in `lib/{brevo,turnstile}.ts` (imported only by `app/api/{newsletter,contact}/route.ts`), never `lib/env.ts`.
@@ -86,6 +86,15 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Deploy env (both targets set):** Vercel env (secrets + public) set via `vercel env add` (CLI authed) for **production** and the **preview branch** — preview needs the branch arg (`vercel env add NAME preview <branch> --value … --yes --force`); plain `preview` refuses to auto-pick "all branches" non-interactively. **Cloudflare runtime secrets** (`BREVO_*`, `TURNSTILE_SECRET_KEY`) set via `wrangler secret put` after `wrangler login` (account `gregoriomoreta4@gmail.com`) — they persist across the wrangler.jsonc deploy (encrypted *secrets* aren't wiped; plaintext *vars* are). `wrangler` is **not** authed in CI (deploys run in Workers Builds), so secret changes need a local `wrangler login` or the dashboard (Settings → Variables and Secrets → type *Secret*).
 - **CSP** grew for Turnstile (`challenges.cloudflare.com` script/frame/connect) + Calendly (`assets.calendly.com` script/style, `*.calendly.com` frame/img). `frame-src` is now explicit (was falling back to `default-src 'self'`).
 - **Booking CTAs** open Calendly by **label match** (`/discovery call/i` in `CtaButton`), NOT a Sanity content/schema change — the live site shares one dataset, so CTAs must stay valid anchors there too; unmatched labels fall back to the `#connect` anchor.
+
+## Phase 3 fix-round facts (don't re-learn)
+- **Calendly:** real **"Discovery Call"** event (one-on-one, 60 min, slug `discovery-call`, active) created via the Calendly API. CSP `frame-src` must include the **apex `https://calendly.com`** (the popup iframes the apex; `*.calendly.com` does NOT match it). Calendly event-type creation IS possible via the API now but needs a Personal Access Token (not stored — used transiently, then revoked).
+- **GA:** the working id is the **measurement id `G-RLM87R4BM5`** (NOT the numeric Stream ID — that loads a broken tag, no data, no cookies). Committed as the `lib/env.ts` default. GA loads **only on production hosts** (allowlist in `Analytics.tsx`) — never localhost/preview. On consent decline/withdrawal: `ga-disable-<id>` flag set + `_ga`/`_gid` cookies deleted.
+- **Consent** is a centered modal (`role=dialog`, focus-trap, scroll-lock); footer **"Cookie settings"** re-opens it (GDPR withdrawal). Global opt-in: GA never loads pre-consent.
+- **In-page nav** uses `SectionLink` + `HashScroll` + `lib/scroll.ts` (smooth scroll, clean URL on home, `/#section` from other routes, sticky-nav offset). Don't reintroduce bare `#anchor` hrefs — they break nav on `/privacy` `/terms`.
+- **Rate limiting** (`lib/rate-limit.ts`) is in-memory/per-instance only — won't persist across Cloudflare isolates; it's a layer on Turnstile, not a global guarantee.
+- **Security headers** now include **HSTS**. **Legal** text is expanded for GDPR/CCPA + NY governing law, but still wants a lawyer review before public launch.
+- **End-of-phase ritual:** use the **`/phase-handoff`** skill (`.claude/skills/phase-handoff/`).
 
 ## Don't
 Don't add Supabase (this is Sanity). Don't invent brand values (DESIGN.md). Don't embed the Studio. Don't expand scope past the approved plan without checking in. Don't reach for a dependency the stack already covers.

@@ -9,6 +9,7 @@ import { MeetReign } from "@/components/sections/MeetReign";
 import { WhoIsThisFor } from "@/components/sections/WhoIsThisFor";
 import { Newsletter } from "@/components/sections/Newsletter";
 import { Connect } from "@/components/sections/Connect";
+import { HashScroll } from "@/components/layout/HashScroll";
 
 /**
  * Home — the single-scroll page. Server Component: fetches the published
@@ -28,6 +29,7 @@ export default async function Home() {
 
   return (
     <>
+      <HashScroll />
       <Hero data={home.hero} />
       <GuidingQuestions questions={home.guidingQuestions} />
       <PracticeSection data={home.practice} />

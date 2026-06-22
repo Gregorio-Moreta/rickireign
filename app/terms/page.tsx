@@ -7,7 +7,7 @@ import { SITE_SETTINGS_QUERY } from "@/lib/sanity/queries";
 import type { SiteSettings } from "@/lib/sanity/types";
 import { FALLBACK_CONTACT_EMAIL } from "@/lib/constants";
 
-const LAST_UPDATED = "June 18, 2026";
+const LAST_UPDATED = "June 21, 2026";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
@@ -73,6 +73,18 @@ export default async function TermsPage() {
             The Site is provided &ldquo;as is&rdquo; without warranties of any
             kind. To the fullest extent permitted by law, we are not liable for
             any damages arising from your use of the Site.
+          </p>
+
+          <h2>Governing law</h2>
+          <p>
+            These Terms are governed by the laws of the State of New York,
+            without regard to its conflict-of-laws rules. You agree that any
+            dispute arising from these Terms or your use of the Site will be
+            subject to the exclusive jurisdiction of the state and federal courts
+            located in New York County (Manhattan), New York, and you consent to
+            venue there. If you are a consumer, this does not remove any
+            protection you have under the mandatory laws of your place of
+            residence.
           </p>
 
           <h2>Changes to these terms</h2>
