@@ -176,6 +176,33 @@
 @utility layer-banner {
   z-index: 60; /* consent banner — above the sticky nav (50), below the skip link */
 }
+
+/* Consent modal entrance — auto-runs on mount; the global reduced-motion block
+   below collapses the duration so it is effectively instant when requested. */
+@keyframes rr-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes rr-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@utility animate-scrim-in {
+  animation: rr-scrim-in 200ms ease-out both;
+}
+@utility animate-modal-in {
+  animation: rr-modal-in 200ms ease-out both;
+}
 @utility layer-skip-link {
   z-index: 100; /* above the sticky nav so the skip link is reachable */
 }

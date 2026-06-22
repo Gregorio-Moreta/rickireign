@@ -54,7 +54,7 @@ export function SocialLinks({
                 : { target: "_blank", rel: "noopener noreferrer" })}
               aria-label={PLATFORM_LABEL[link.platform]}
               className={cn(
-                "inline-flex h-11 w-11 items-center justify-center rounded-full",
+                "inline-flex h-12 w-12 items-center justify-center rounded-full",
                 "transition-colors duration-200",
                 "motion-reduce:transition-none",
                 linkClassName,
@@ -74,8 +74,8 @@ function IconWrap({ children }: { children: ReactNode }) {
     <svg
       aria-hidden="true"
       focusable="false"
-      width="20"
-      height="20"
+      width="28"
+      height="28"
       viewBox="0 0 24 24"
       fill="currentColor"
     >

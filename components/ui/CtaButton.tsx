@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { BookingButton } from "@/components/ui/BookingButton";
+import { scrollToSection } from "@/lib/scroll";
 import type { CtaStyle } from "@/lib/sanity/types";
 
 /**
@@ -37,6 +38,19 @@ export function CtaButton({
       >
         {label}
       </BookingButton>
+    );
+  }
+
+  // In-page section target (e.g. "#connect") → smooth-scroll, keep the URL clean.
+  if (target.startsWith("#")) {
+    return (
+      <Button
+        variant={style ?? "primary"}
+        className={className}
+        onClick={() => scrollToSection(target.slice(1))}
+      >
+        {label}
+      </Button>
     );
   }
 

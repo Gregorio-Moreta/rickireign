@@ -27,12 +27,19 @@ const SANITY_DATASET_DEFAULT = "production";
 // section, and this keeps the deploy deterministic without one. An env var still
 // overrides (e.g. to point a preview at a different widget). Keep real SECRETS
 // (Turnstile secret, Brevo key) out of this file — they're server-only.
+// GA4 measurement ID (public — it ships in the page). Format is "G-XXXXXXXXXX"
+// (NOT the numeric Stream ID). Committed as a default so analytics works on both
+// deploy targets without a build var; an env var still overrides.
+const GA_MEASUREMENT_ID_DEFAULT = "G-RLM87R4BM5";
 const TURNSTILE_SITE_KEY_DEFAULT = "0x4AAAAAADnIF3Wg90-SW3H_";
+// The "Discovery Call" event type (one-on-one, 60 min, active) on Ricki's
+// Calendly. Public scheduling link — opens straight to the date picker.
 const CALENDLY_URL_DEFAULT = "https://calendly.com/gregorioe-moreta/discovery-call";
 
 export const publicEnv = {
-  /** GA4 measurement id (e.g. "G-XXXXXXXXXX"). Undefined disables analytics. */
-  gaMeasurementId: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+  /** GA4 measurement id (e.g. "G-XXXXXXXXXX"). Falls back to the committed default. */
+  gaMeasurementId:
+    process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || GA_MEASUREMENT_ID_DEFAULT,
   /** Sanity project id (public). Falls back to the project's constant default. */
   sanityProjectId:
     process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || SANITY_PROJECT_ID_DEFAULT,

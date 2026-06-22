@@ -1,16 +1,18 @@
 import { Container } from "@/components/layout/Container";
+import { SectionLink } from "@/components/layout/SectionLink";
+import { CookieSettingsButton } from "@/components/analytics/CookieSettingsButton";
 import { SocialLinks } from "@/components/ui/SocialLinks";
 import { cn } from "@/lib/cn";
 import type { SocialLink } from "@/lib/sanity/types";
 
 /**
  * Site footer. Wordmark, social links, and footer text come from Sanity
- * `siteSettings`; the Contact/Privacy/Terms links are routes (Privacy/Terms
- * land in Phase 3).
+ * `siteSettings`. "Contact" is a section link to the home #connect section
+ * (works from any route); Privacy/Terms are real routes.
  */
 
 const FOOTER_LINKS = [
-  { label: "Contact", href: "#connect" },
+  { label: "Contact", sectionId: "connect" },
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ] as const;
@@ -36,8 +38,8 @@ export function Footer({ wordmark, social, footerText }: FooterProps) {
     <footer className="bg-inverse-surface text-inverse-on-surface">
       <Container className="py-12">
         <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
-          <a
-            href="#top"
+          <SectionLink
+            sectionId=""
             className={cn(
               "font-display text-2xl text-inverse-on-surface",
               "rounded-sm focus-visible:outline-none focus-visible:ring-2",
@@ -46,17 +48,30 @@ export function Footer({ wordmark, social, footerText }: FooterProps) {
             )}
           >
             {wordmark ?? "Ricki Reign"}
-          </a>
+          </SectionLink>
 
           <nav aria-label="Footer">
             <ul className="flex flex-wrap gap-6">
-              {FOOTER_LINKS.map((link) => (
-                <li key={link.label}>
-                  <a href={link.href} className={linkClasses}>
-                    {link.label}
-                  </a>
-                </li>
-              ))}
+              {FOOTER_LINKS.map((link) =>
+                "sectionId" in link ? (
+                  <li key={link.label}>
+                    <SectionLink sectionId={link.sectionId} className={linkClasses}>
+                      {link.label}
+                    </SectionLink>
+                  </li>
+                ) : (
+                  <li key={link.label}>
+                    <a href={link.href} className={linkClasses}>
+                      {link.label}
+                    </a>
+                  </li>
+                ),
+              )}
+              <li>
+                <CookieSettingsButton
+                  className={cn(linkClasses, "cursor-pointer")}
+                />
+              </li>
             </ul>
           </nav>
 

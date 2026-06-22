@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { Container } from "@/components/layout/Container";
+import { SectionLink } from "@/components/layout/SectionLink";
 import { cn } from "@/lib/cn";
 import type { SiteSettings } from "@/lib/sanity/types";
+
+/** Strip a leading "#" from a Sanity nav anchor → bare section id. */
+const toSectionId = (anchor: string) => anchor.replace(/^#/, "");
 
 /**
  * Fallback nav used only when Sanity `siteSettings.nav` is empty, so the header
@@ -42,8 +46,8 @@ export function Nav({ wordmark, links }: NavProps) {
     >
       <Container as="nav" className="flex items-center justify-between py-4">
         {/* Caslon wordmark */}
-        <a
-          href="#top"
+        <SectionLink
+          sectionId=""
           className={cn(
             "font-display text-xl tracking-tight text-on-surface",
             "rounded-sm focus-visible:outline-none focus-visible:ring-2",
@@ -52,15 +56,15 @@ export function Nav({ wordmark, links }: NavProps) {
           )}
         >
           {wordmark ?? "Ricki Reign"}
-        </a>
+        </SectionLink>
 
         {/* Desktop links */}
         <ul className="hidden items-center gap-8 md:flex">
           {navLinks.map((link) => (
             <li key={link._key}>
-              <a href={link.anchor} className={linkClasses}>
+              <SectionLink sectionId={toSectionId(link.anchor)} className={linkClasses}>
                 {link.label}
-              </a>
+              </SectionLink>
             </li>
           ))}
         </ul>
@@ -97,13 +101,13 @@ export function Nav({ wordmark, links }: NavProps) {
           <ul className="flex flex-col gap-4">
             {navLinks.map((link) => (
               <li key={link._key}>
-                <a
-                  href={link.anchor}
-                  onClick={() => setOpen(false)}
+                <SectionLink
+                  sectionId={toSectionId(link.anchor)}
+                  onNavigate={() => setOpen(false)}
                   className={cn(linkClasses, "block py-1")}
                 >
                   {link.label}
-                </a>
+                </SectionLink>
               </li>
             ))}
           </ul>

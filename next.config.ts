@@ -8,7 +8,9 @@ import type { NextConfig } from "next";
  *   Cloudflare Turnstile (Phase 3 — forms): script + iframe challenge from
  *     challenges.cloudflare.com; siteverify is server-to-server (not CSP-gated).
  *   Calendly (Phase 3 — booking popup): widget script from assets.calendly.com,
- *     scheduling iframe from *.calendly.com.
+ *     scheduling iframe from calendly.com (apex) + *.calendly.com. The apex is
+ *     required separately — `*.calendly.com` does NOT match the bare apex, and
+ *     the popup frames `https://calendly.com/<user>/<event>`.
  * next/font self-hosts fonts, so fonts are effectively 'self'; the Google Fonts
  * origins are listed per the plan and are harmless. Form POSTs go to same-origin
  * /api/* so `form-action 'self'` stays.
@@ -23,7 +25,7 @@ const cspDirectives = [
   "img-src 'self' data: https://cdn.sanity.io https://*.google-analytics.com https://*.googletagmanager.com https://*.calendly.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://assets.calendly.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "frame-src 'self' https://challenges.cloudflare.com https://*.calendly.com",
+  "frame-src 'self' https://challenges.cloudflare.com https://calendly.com https://*.calendly.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -32,6 +34,13 @@ const cspDirectives = [
 
 const securityHeaders = [
   { key: "Content-Security-Policy", value: cspDirectives },
+  // Force HTTPS for two years, including subdomains. The site is HTTPS-only on
+  // both Vercel and Cloudflare, so this is safe; omit `preload` to keep it
+  // reversible (preload-list submission is hard to undo).
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=63072000; includeSubDomains",
+  },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
