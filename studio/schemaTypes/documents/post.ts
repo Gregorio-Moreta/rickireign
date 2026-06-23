@@ -1,6 +1,21 @@
 import { defineType, defineField, defineArrayMember } from "sanity";
 import { DocumentTextIcon } from "@sanity/icons";
 
+// Preset tag taxonomy — editors pick from these so tags stay consistent and the
+// `/blog/tag/<slug>` pages group correctly (no "Essay" vs "essays" drift). To add
+// a tag in the future, append here, then `npm run schema:deploy` + redeploy the
+// Studio. (For fully no-code tag management, promote tags to a reference doc type.)
+export const POST_TAGS = [
+  "Essay",
+  "Note",
+  "Somatic Leadership",
+  "Ancestral Wisdom",
+  "Organizational Leadership",
+  "Practice",
+  "Community",
+  "Ritual & Rest",
+] as const;
+
 // Blog post — Phase 4, modelled now so the content type exists.
 export const post = defineType({
   name: "post",
@@ -64,7 +79,10 @@ export const post = defineType({
       name: "tags",
       type: "array",
       of: [defineArrayMember({ type: "string" })],
-      options: { layout: "tags" },
+      options: {
+        layout: "tags",
+        list: POST_TAGS.map((tag) => ({ title: tag, value: tag })),
+      },
     }),
     // Optional per-post SEO overrides. Left blank, the app derives metadata from
     // title / excerpt / coverImage (see app/blog/[slug]/page.tsx).
