@@ -78,7 +78,7 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Cloudflare:** Worker `rickireign` (prod `https://rickireign.gregoriomoreta4.workers.dev`). Dashboard deploy command = `npm run deploy`.
 
 ## Build phases (docs/PLAN.md §7)
-0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (PR #4) · 3 Forms & legal ✓ (PR #5 merged; fix/hardening round in `fix/phase-3-forms-legal`) · **4 Blog** · 5 Verify & ship.
+0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (PR #4) · 3 Forms & legal ✓ (PR #5 + fix-round PR #6, both merged) · 4 Blog ✓ (branch `004-blog`, PR open, not merged) · **5 Verify & ship**.
 
 ## Phase 3 facts (Forms & legal — don't re-learn)
 - **Brevo:** account `gregorioe.moreta@gmail.com`. Newsletter list id `3` ("Newsletter — rickireign.com"); DOI template id `1` (tagged `optin`, confirm button → `{{ doubleoptin }}` — required for forms hosted OUTSIDE Brevo). Transactional sender = `BREVO_SENDER_EMAIL` (currently the verified gmail; verify a `rickireign.com` domain sender for prod). Server secrets read straight from `process.env` in `lib/{brevo,turnstile}.ts` (imported only by `app/api/{newsletter,contact}/route.ts`), never `lib/env.ts`.
@@ -95,6 +95,16 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Rate limiting** (`lib/rate-limit.ts`) is in-memory/per-instance only — won't persist across Cloudflare isolates; it's a layer on Turnstile, not a global guarantee.
 - **Security headers** now include **HSTS**. **Legal** text is expanded for GDPR/CCPA + NY governing law, but still wants a lawyer review before public launch.
 - **End-of-phase ritual:** use the **`/phase-handoff`** skill (`.claude/skills/phase-handoff/`).
+
+## Phase 4 facts (Blog / "Journal" — don't re-learn)
+- **Routes:** `/blog` (index), `/blog/[slug]` (detail, `generateStaticParams` + per-post `generateMetadata`), `/blog/tag/[tag]` (indexable tag pages). Plus `app/sitemap.ts` + `app/robots.ts`. All Server Components, 60s ISR via the existing `sanityFetch`.
+- **`tag` is a RESERVED key in Sanity `QueryParams`** (typed `never`). A GROQ param `$tag` fails tsc — `POSTS_BY_TAG_QUERY` uses **`$tagName`** (`{ tagName: tag }`).
+- **Tags are free-text strings** → slugified for URLs (`lib/tags.ts` `slugifyTag`), resolved back via `TAGS_QUERY` + `resolveTagSlug`.
+- **Per-post SEO = the optional `seo` object on `post`** (added Phase 4, schema deployed). `generateMetadata` uses it if filled, else derives `title`/`excerpt`/`coverImage` (Option B). Same default-or-override rule as the rest of the content model.
+- **`PostBody`** is a richer Portable Text map than `MeetReign` (headings, lists, blockquote, link marks with external `target=_blank rel=noopener`, inline images sized from the asset ref `image-<id>-<W>x<H>-<fmt>`). Reuse it; don't re-derive the block map.
+- **Seeded content:** `author` `Ricki Reign` (`_id author-ricki-reign`) + 2 published posts (`leading-from-the-body`, `ancestral-remembering`). Placeholders — Ricki replaces in the Studio. Publish author before posts (reference order).
+- **"Journal"** is the nav label (not "Blog"); a real route → `next/link` in `Nav` + `Footer`, NOT a `SectionLink` anchor.
+- Blog adds **no new env or CSP origins** (Sanity image CDN already allowed).
 
 ## Don't
 Don't add Supabase (this is Sanity). Don't invent brand values (DESIGN.md). Don't embed the Studio. Don't expand scope past the approved plan without checking in. Don't reach for a dependency the stack already covers.
