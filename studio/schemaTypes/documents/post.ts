@@ -23,7 +23,24 @@ export const post = defineType({
     defineField({
       name: "coverImage",
       type: "image",
-      options: { hotspot: true },
+      options: {
+        hotspot: true,
+        // Enables the one-click "Generate" AI action on this image, using the
+        // `instruction` prompt below. (Requires the `assist()` plugin.)
+        aiAssist: { imageInstructionField: "instruction" },
+      },
+      fields: [
+        defineField({
+          type: "text",
+          name: "instruction",
+          title: "AI image prompt",
+          rows: 3,
+          description:
+            "Optional. Use the ✨ Generate action on the image to create an on-brand cover. Add a line about this article's theme to steer it; the brand style is pre-filled.",
+          initialValue:
+            "An abstract, calm, premium editorial cover in the 'Ancestral Modernity' palette — deep forest green, warm sandstone, and a subtle luminous-teal accent; soft natural light, fine organic texture. No text, no people, no faces. Reflect the theme of this article: ",
+        }),
+      ],
     }),
     defineField({
       name: "body",

@@ -1,6 +1,7 @@
 import { defineConfig } from "sanity";
 import { structureTool } from "sanity/structure";
 import { visionTool } from "@sanity/vision";
+import { assist } from "@sanity/assist";
 import { schemaTypes } from "./schemaTypes";
 import { structure } from "./structure";
 
@@ -12,7 +13,10 @@ export default defineConfig({
   title: "Ricki Reign",
   projectId: "zsuyhr45",
   dataset: "production",
-  plugins: [structureTool({ structure }), visionTool()],
+  // AI Assist powers the one-click "Generate" image action on the post cover
+  // (see post.ts coverImage.options.aiAssist). Generation runs through the
+  // editor's authenticated Studio session — the public site stays token-less.
+  plugins: [structureTool({ structure }), visionTool(), assist()],
   schema: {
     types: schemaTypes,
     // Remove singletons from the global "create new" templates.
