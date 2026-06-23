@@ -20,7 +20,18 @@ const eslintConfig = defineConfig([
     "studio/**",
     // Local Vercel build output (from `vercel build`), machine-generated.
     ".vercel/**",
+    // Test runner artifacts (Playwright reports/traces, coverage).
+    "playwright-report/**",
+    "test-results/**",
+    "coverage/**",
   ]),
+  // Playwright fixtures name their setup param `use` (e.g. `await use(context)`),
+  // which the React Hooks rule mistakes for React 19's `use` hook. Tests are not
+  // React code — disable the rule there.
+  {
+    files: ["tests/**/*.ts"],
+    rules: { "react-hooks/rules-of-hooks": "off" },
+  },
 ]);
 
 export default eslintConfig;
