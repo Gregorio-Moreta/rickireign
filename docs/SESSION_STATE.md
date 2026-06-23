@@ -41,6 +41,8 @@ git push -u origin 005-verify-ship
 
 **Hosted Studio DEPLOYED:** **https://rickireign.sanity.studio** (`studioHost` + `deployment.appId` in `studio/sanity.cli.ts`) — the **no-code editor for Ricki**. Add/edit/remove posts in the browser; live within 60s ISR. Add/remove round-trip verified end-to-end. Same `production` dataset as the site.
 
+**One-click AI covers:** `@sanity/assist` enabled in the Studio; `post.coverImage` has a pre-filled brand prompt + `aiAssist.imageInstructionField`. Editors click ✨ Generate for on-brand art — runs in the authenticated Studio session, no app write token (site stays token-less). Experimental Sanity feature; `CoverFallback` is the safety net.
+
 **Seeded content (Sanity MCP, published):** `author` **Ricki Reign** (`_id author-ricki-reign`) + 2 posts — `leading-from-the-body` (tags: Somatic Leadership, Essay) and `ancestral-remembering` (tags: Ancestral Wisdom, Essay). Author published before posts (reference order). On-brand placeholders, replaceable in the Studio.
 
 **Runtime-verified locally (dev server + curl):** `/blog` lists both; detail `<title>` + `og:type=article` + body render; `/blog/tag/essay` shows both; bad slug + bad tag → 404; sitemap includes post + tag URLs; robots correct.
