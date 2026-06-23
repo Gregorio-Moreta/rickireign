@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, changeFrequency: "monthly", priority: 1 },
-    { url: `${BASE_URL}/blog`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${BASE_URL}/journal`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${BASE_URL}/privacy`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${BASE_URL}/terms`, changeFrequency: "yearly", priority: 0.3 },
   ];
@@ -23,7 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const postRoutes: MetadataRoute.Sitemap = (posts ?? [])
     .filter((post) => Boolean(post.slug))
     .map((post) => ({
-      url: `${BASE_URL}/blog/${post.slug}`,
+      url: `${BASE_URL}/journal/${post.slug}`,
       lastModified: post.publishedAt ? new Date(post.publishedAt) : undefined,
       changeFrequency: "monthly",
       priority: 0.6,
@@ -32,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const tagRoutes: MetadataRoute.Sitemap = (tags ?? [])
     .filter((tag): tag is string => typeof tag === "string" && tag.length > 0)
     .map((tag) => ({
-      url: `${BASE_URL}/blog/tag/${slugifyTag(tag)}`,
+      url: `${BASE_URL}/journal/tag/${slugifyTag(tag)}`,
       changeFrequency: "weekly",
       priority: 0.4,
     }));

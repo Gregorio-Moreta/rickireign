@@ -1,6 +1,6 @@
 /**
  * Blog tags are free-text strings in Sanity. URLs need a stable, clean slug, so
- * we slugify for the route (`/blog/tag/<slug>`) and resolve back to the original
+ * we slugify for the route (`/journal/tag/<slug>`) and resolve back to the original
  * display string when querying — two different tags never collide in practice
  * for this small blog, and the resolve step picks the first match.
  */

@@ -10,12 +10,12 @@ export const metadata: Metadata = {
   title: "Journal",
   description:
     "Essays and notes from Ricki Reign on somatic leadership, ancestral wisdom, and the work of building organizations with care.",
-  alternates: { canonical: "/blog" },
+  alternates: { canonical: "/journal" },
   openGraph: {
     title: "Journal — Ricki Reign",
     description:
       "Essays and notes from Ricki Reign on somatic leadership, ancestral wisdom, and the work of building organizations with care.",
-    url: "/blog",
+    url: "/journal",
     type: "website",
   },
 };

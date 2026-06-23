@@ -8,6 +8,7 @@ import { urlFor } from "@/lib/sanity/image";
 import { Section } from "@/components/layout/Section";
 import { Container } from "@/components/layout/Container";
 import { SanityImage, hasImageAsset } from "@/components/ui/SanityImage";
+import { CoverFallback } from "@/components/ui/CoverFallback";
 import { PostBody } from "@/components/blog/PostBody";
 import { formatDate } from "@/lib/date";
 import { slugifyTag } from "@/lib/tags";
@@ -47,11 +48,11 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `/blog/${post.slug}` },
+    alternates: { canonical: `/journal/${post.slug}` },
     openGraph: {
       title: title ?? undefined,
       description: description ?? undefined,
-      url: `/blog/${post.slug}`,
+      url: `/journal/${post.slug}`,
       type: "article",
       publishedTime: post.publishedAt,
       authors: post.author?.name ? [post.author.name] : undefined,
@@ -79,7 +80,7 @@ export default async function PostPage({
         <article className="mx-auto flex max-w-3xl flex-col gap-8">
           <header className="flex flex-col gap-4">
             <Link
-              href="/blog"
+              href="/journal"
               className={cn(
                 "self-start font-sans text-label-md uppercase text-secondary",
                 "transition-colors duration-200 hover:text-luminous-teal",
@@ -117,7 +118,9 @@ export default async function PostPage({
               priority
               className="w-full rounded-xl object-cover shadow-ambient"
             />
-          ) : null}
+          ) : (
+            <CoverFallback className="rounded-xl shadow-ambient" />
+          )}
 
           <PostBody value={body} />
 
@@ -126,7 +129,7 @@ export default async function PostPage({
               {tags.map((tag) => (
                 <Link
                   key={tag}
-                  href={`/blog/tag/${slugifyTag(tag)}`}
+                  href={`/journal/tag/${slugifyTag(tag)}`}
                   className={cn(
                     "inline-flex rounded-full bg-surface-container px-3 py-1",
                     "font-sans text-label-md uppercase text-on-surface-variant",

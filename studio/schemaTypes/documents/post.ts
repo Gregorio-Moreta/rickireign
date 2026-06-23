@@ -1,20 +1,6 @@
 import { defineType, defineField, defineArrayMember } from "sanity";
 import { DocumentTextIcon } from "@sanity/icons";
-
-// Preset tag taxonomy — editors pick from these so tags stay consistent and the
-// `/blog/tag/<slug>` pages group correctly (no "Essay" vs "essays" drift). To add
-// a tag in the future, append here, then `npm run schema:deploy` + redeploy the
-// Studio. (For fully no-code tag management, promote tags to a reference doc type.)
-export const POST_TAGS = [
-  "Essay",
-  "Note",
-  "Somatic Leadership",
-  "Ancestral Wisdom",
-  "Organizational Leadership",
-  "Practice",
-  "Community",
-  "Ritual & Rest",
-] as const;
+import { TagInput } from "../../components/TagInput";
 
 // Blog post — Phase 4, modelled now so the content type exists.
 export const post = defineType({
@@ -31,8 +17,28 @@ export const post = defineType({
     defineField({
       name: "slug",
       type: "slug",
-      options: { source: "title", maxLength: 96 },
-      validation: (rule) => rule.required(),
+      options: {
+        source: "title",
+        maxLength: 96,
+        // Force URL-safe slugs even on manual entry (spaces/punctuation break the
+        // /journal/[slug] route — e.g. a slug with a space 404s).
+        slugify: (input) =>
+          input
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "")
+            .slice(0, 96),
+      },
+      validation: (rule) =>
+        rule.required().custom((value) => {
+          const current = (value as { current?: string } | undefined)?.current;
+          if (!current) return true; // required() handles emptiness
+          return (
+            /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(current) ||
+            "Use lowercase letters, numbers, and hyphens only — no spaces or punctuation."
+          );
+        }),
     }),
     defineField({ name: "excerpt", type: "text", rows: 3 }),
     defineField({
@@ -79,10 +85,9 @@ export const post = defineType({
       name: "tags",
       type: "array",
       of: [defineArrayMember({ type: "string" })],
-      options: {
-        layout: "tags",
-        list: POST_TAGS.map((tag) => ({ title: tag, value: tag })),
-      },
+      // Custom input: free-type any tag + pick from the preset POST_TAGS list.
+      // Stores plain strings, so /journal/tag pages + queries are unchanged.
+      components: { input: TagInput },
     }),
     // Optional per-post SEO overrides. Left blank, the app derives metadata from
     // title / excerpt / coverImage (see app/blog/[slug]/page.tsx).

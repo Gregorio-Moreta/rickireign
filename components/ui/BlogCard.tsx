@@ -64,7 +64,7 @@ export function BlogCard({ post }: { post: PostListItem }) {
         <h3 className="line-clamp-2 min-h-[2lh] font-display text-headline-md text-on-surface">
           {slug ? (
             <Link
-              href={`/blog/${slug}`}
+              href={`/journal/${slug}`}
               className={cn(
                 "transition-colors duration-200 hover:text-primary-container",
                 "after:absolute after:inset-0 after:rounded-lg",
@@ -89,7 +89,7 @@ export function BlogCard({ post }: { post: PostListItem }) {
             {tags.map((tag) => (
               <li key={tag}>
                 <Link
-                  href={`/blog/tag/${slugifyTag(tag)}`}
+                  href={`/journal/tag/${slugifyTag(tag)}`}
                   className={cn(
                     "inline-flex rounded-full bg-surface-container px-3 py-1",
                     "font-sans text-label-md uppercase text-on-surface-variant",

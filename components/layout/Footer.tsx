@@ -12,7 +12,7 @@ import type { SocialLink } from "@/lib/sanity/types";
  */
 
 const FOOTER_LINKS = [
-  { label: "Journal", href: "/blog" },
+  { label: "Journal", href: "/journal" },
   { label: "Contact", sectionId: "connect" },
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },

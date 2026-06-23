@@ -35,8 +35,8 @@ export async function generateMetadata({
   return {
     title,
     description,
-    alternates: { canonical: `/blog/tag/${tagSlug}` },
-    openGraph: { title, description, url: `/blog/tag/${tagSlug}`, type: "website" },
+    alternates: { canonical: `/journal/tag/${tagSlug}` },
+    openGraph: { title, description, url: `/journal/tag/${tagSlug}`, type: "website" },
   };
 }
 
@@ -60,7 +60,7 @@ export default async function TagPage({
       <Container>
         <header className="flex max-w-2xl flex-col gap-4">
           <Link
-            href="/blog"
+            href="/journal"
             className={cn(
               "self-start font-sans text-label-md uppercase text-secondary",
               "transition-colors duration-200 hover:text-luminous-teal",

@@ -69,6 +69,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // The blog route is now /journal (matches the "Journal" nav label). Permanently
+  // redirect the old /blog paths so any saved/shared links still resolve.
+  async redirects() {
+    return [
+      { source: "/blog", destination: "/journal", permanent: true },
+      { source: "/blog/:path*", destination: "/journal/:path*", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

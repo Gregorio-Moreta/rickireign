@@ -70,7 +70,7 @@ export function Nav({ wordmark, links }: NavProps) {
           ))}
           {/* Journal is a real route, not an in-page anchor. */}
           <li>
-            <Link href="/blog" className={linkClasses}>
+            <Link href="/journal" className={linkClasses}>
               Journal
             </Link>
           </li>
@@ -119,7 +119,7 @@ export function Nav({ wordmark, links }: NavProps) {
             ))}
             <li>
               <Link
-                href="/blog"
+                href="/journal"
                 onClick={() => setOpen(false)}
                 className={cn(linkClasses, "block py-1")}
               >
