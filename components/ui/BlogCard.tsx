@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SanityImage, hasImageAsset } from "@/components/ui/SanityImage";
+import { CoverFallback } from "@/components/ui/CoverFallback";
 import { formatDate } from "@/lib/date";
 import { slugifyTag } from "@/lib/tags";
 import { cn } from "@/lib/cn";
@@ -19,13 +20,15 @@ export function BlogCard({ post }: { post: PostListItem }) {
   return (
     <article
       className={cn(
-        "group relative flex flex-col gap-4",
+        "group relative flex h-full flex-col gap-4",
         "rounded-lg focus-within:ring-2 focus-within:ring-primary-container",
         "focus-within:ring-offset-2 focus-within:ring-offset-surface",
       )}
     >
-      {hasCover ? (
-        <div className="overflow-hidden rounded-lg bg-surface-container">
+      {/* Always render a 3:2 cover so the grid stays uniform; posts without an
+          uploaded image get the branded fallback. */}
+      <div className="overflow-hidden rounded-lg bg-surface-container">
+        {hasCover ? (
           <SanityImage
             image={coverImage}
             alt={title ?? ""}
@@ -38,10 +41,17 @@ export function BlogCard({ post }: { post: PostListItem }) {
               "motion-reduce:transition-none motion-reduce:group-hover:scale-100",
             )}
           />
-        </div>
-      ) : null}
+        ) : (
+          <CoverFallback
+            className={cn(
+              "transition-transform duration-500 ease-out group-hover:scale-[1.03]",
+              "motion-reduce:transition-none motion-reduce:group-hover:scale-100",
+            )}
+          />
+        )}
+      </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-1 flex-col gap-3">
         {date ? (
           <time
             dateTime={publishedAt}
@@ -51,7 +61,7 @@ export function BlogCard({ post }: { post: PostListItem }) {
           </time>
         ) : null}
 
-        <h3 className="font-display text-headline-md text-on-surface text-balance">
+        <h3 className="line-clamp-2 min-h-[2lh] font-display text-headline-md text-on-surface">
           {slug ? (
             <Link
               href={`/blog/${slug}`}
@@ -69,13 +79,13 @@ export function BlogCard({ post }: { post: PostListItem }) {
         </h3>
 
         {excerpt ? (
-          <p className="font-sans text-body-md text-on-surface-variant text-pretty">
+          <p className="line-clamp-3 min-h-[3lh] font-sans text-body-md text-on-surface-variant text-pretty">
             {excerpt}
           </p>
         ) : null}
 
         {tags && tags.length > 0 ? (
-          <ul className="relative z-10 mt-1 flex flex-wrap gap-2">
+          <ul className="relative z-10 mt-auto flex flex-wrap gap-2 pt-1">
             {tags.map((tag) => (
               <li key={tag}>
                 <Link
