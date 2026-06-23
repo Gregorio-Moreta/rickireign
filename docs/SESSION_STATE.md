@@ -1,65 +1,87 @@
-# Session State — handoff into Phase 4 (Blog)
+# Session State — handoff into Phase 5 (Verify & ship)
 
-_Transient doc. Reflects state as Phase 3 (Forms & legal) + its fix/hardening round are delivered (2026-06-22). When Phase 4 ships, rewrite this for Phase 5. Durable facts/rules live in `CLAUDE.md`._
+_Transient doc. Reflects state as Phase 4 (Blog / "Journal") is delivered (2026-06-23). When Phase 5 ships, rewrite this. Durable facts/rules live in `CLAUDE.md`._
 
 ## Where we are
 
-**Phases 0–3 are complete.**
-- Original Phase 3 is **merged to `main`** via **PR #5** (merge commit `d759724`).
-- A **Phase 3 fix + hardening round** is delivered via a **new PR (`fix/phase-3-forms-legal` → main)** which bundles this handoff. `main` is Phase-4-ready the moment that PR merges. **Not merged yet — awaiting human sign-off.**
+**Phases 0–4 are complete.**
+- Phases 0–3 are **merged to `main`** (Phase 3 + its fix/hardening round via PR #5 and PR #6).
+- **Phase 4 (Blog) is delivered on branch `004-blog`** via a feature PR (this handoff bundled in). **Not merged yet — awaiting human sign-off.** `main` is Phase-5-ready the moment it merges.
+- **Both builds pass locally** for head SHA `11d68c2` (`npm run build` + `npx opennextjs-cloudflare build`); lint + tsc clean. CI (Vercel deploy + Cloudflare Workers Build) was triggered on push — **confirm both green for `11d68c2` before merge** (visible on the PR).
+- Branches kept (no-delete rule): `000-foundation`, `001-content-model`, `002-home`, `docs/phase-2-handoff`, `003-forms-and-legal`, `fix/phase-3-forms-legal`, `004-blog`, `main`.
 
-- **Both builds pass** (`npm run build` + `npx opennextjs-cloudflare build`); lint + tsc clean. Confirm both CI deploys green on the fix-PR head SHA before relying on it.
-- **Live-tested end-to-end (real browser):** newsletter → Brevo DOI email **delivered**; **contact form → Brevo transactional email delivered** to `welcome@rickireign.com` (Brevo events confirm both). Calendly popup opens the real Discovery Call calendar. Consent accept/decline/withdraw + rate-limit 429 verified.
-- Branches kept (no-delete rule): `000-foundation`, `001-content-model`, `002-home`, `docs/phase-2-handoff`, `003-forms-and-legal`, `fix/phase-3-forms-legal`, `main`.
-
-### First steps in Phase 4
+### First steps in Phase 5
 ```bash
-git checkout main && git pull origin main      # after the fix PR merges
-git checkout -b 004-blog
-git push -u origin 004-blog
+git checkout main && git pull origin main      # after the 004-blog PR merges
+git checkout -b 005-verify-ship
+git push -u origin 005-verify-ship
 ```
 
-## What the fix/hardening round delivered (in the new PR)
+## What Phase 4 delivered (on `004-blog`)
 
-- **Calendly fixed** — the CTA pointed at a non-existent `discovery-call` event (404'd to Calendly's marketing page). Created a real **"Discovery Call"** one-on-one **60-min** event via the Calendly API (slug `discovery-call`, active); CSP `frame-src` now also allows the **apex** `https://calendly.com` (the popup iframes the apex; `*.calendly.com` did NOT match it).
-- **Navigation fixed** — header/footer used bare `#anchor` hrefs that did nothing on `/privacy` `/terms` and littered the URL. New `components/layout/SectionLink.tsx` + `HashScroll.tsx` + `lib/scroll.ts`: smooth-scroll with a clean URL on home, navigate to `/#section` from other routes, sticky-nav offset, reduced-motion respected. `CtaButton` in-page targets scroll cleanly too.
-- **Consent UX + GDPR** — `ConsentBanner` is now a **centered modal** (scrim, `role=dialog`, focus-trap, scroll-lock, reduced-motion). Footer **"Cookie settings"** (`CookieSettingsButton`) re-opens it (withdrawal as easy as consent). On decline/withdrawal: GA `ga-disable` flag set **and** `_ga`/`_gid` cookies deleted (`clearAnalyticsCookies`).
-- **GA fixed** — was using the numeric **Stream ID**; corrected to measurement id **`G-RLM87R4BM5`** (committed default in `lib/env.ts`). GA now loads **only on production hosts** (allowlist in `Analytics.tsx`: `rickireign.vercel.app`, `rickireign.com`, `www`, the workers.dev host) — never localhost or preview.
-- **Rate limiting** — `lib/rate-limit.ts` (in-memory sliding window, 5/IP/10min) on both API routes, layered on Turnstile + honeypot. **Caveat:** per-instance only (won't persist across Cloudflare isolates) — for hard global limits use Cloudflare WAF / Vercel Firewall.
-- **Security headers** — added **HSTS** (`max-age=63072000; includeSubDomains`).
-- **Legal** — privacy policy expanded for GDPR/CCPA (controller, lawful bases, cookie list, processors, international transfers, full rights + supervisory-authority complaint, children, no-sale); **Terms governing law = New York** (venue NY County). Both still want a lawyer review before public launch.
-- **Icons** — social icons enlarged to 28px in 48px tap targets (≥ WCAG AAA).
-- **Tooling** — added `.claude/skills/phase-handoff/` (this ritual as a `/phase-handoff` skill).
+**Routes (all Server Components, App Router; 60s ISR via existing `sanityFetch`). Route is `/journal` — `/blog/*` 308-redirects (`next.config.ts`):**
+- `app/journal/page.tsx` — Journal index. All published posts `order(publishedAt desc)`, `PostGrid` of `BlogCard`s, graceful empty state, static metadata.
+- `app/journal/[slug]/page.tsx` — post detail. `generateStaticParams` (pre-renders known slugs), `generateMetadata` (per-post SEO, article OG), `notFound()` on unknown slug. Cover (or `CoverFallback`), title, date·author meta, tags footer, Portable Text body.
+- `app/journal/tag/[tag]/page.tsx` — indexable tag-filtered list. Static params from distinct tags; per-tag metadata; `notFound()` for unknown tag.
+- `app/sitemap.ts` + `app/robots.ts` — static routes + every post + every tag page; robots allow-all → sitemap.
+- (Component dir stays `components/blog/` — internal name, not a URL.)
 
-## What original Phase 3 delivered (already in `main`)
+**Components / libs:**
+- `components/ui/BlogCard.tsx` — whole-card link (title `after:absolute` overlay) + independently-clickable tag links; cover degrades gracefully to a text-only card when no asset.
+- `components/blog/PostGrid.tsx`, `components/blog/PostBody.tsx` — `PostBody` is a richer Portable Text map than `MeetReign` (h2/h3, normal, blockquote, bullet/number lists, strong/em/link marks with external `target=_blank rel=noopener`, inline images sized from the asset ref).
+- `lib/date.ts` (`formatDate`, UTC `Intl.DateTimeFormat`), `lib/tags.ts` (`slugifyTag` + `resolveTagSlug` — tags are free-text, slugified for URLs and resolved back for the GROQ query).
 
-Newsletter DOI (`/api/newsletter`, Brevo list `3` + DOI template `1`), Contact (`/api/contact` → transactional to `siteSettings.contactEmail`), Turnstile on both, honeypot, server-only secret libs (`lib/{validation,turnstile,brevo,http,constants}.ts`), `/privacy` + `/terms` (`Prose`), the consent seam, CSP for Turnstile + Calendly, `zod`.
+**Data + schema:**
+- `lib/sanity/queries.ts`: `POSTS_QUERY`, `POST_QUERY`, `POST_SLUGS_QUERY`, `POSTS_BY_TAG_QUERY` (param **`tagName`**, not `tag` — see gotcha), `TAGS_QUERY` (`array::unique`).
+- `lib/sanity/types.ts`: `Author`, `PostListItem`, `Post`.
+- `studio/schemaTypes/documents/post.ts`: added optional **`seo`** object (Option B). **Schema deployed** (`npm run schema:deploy`) + Studio build validated.
+
+**Nav:** added a top-level **"Journal"** link (real route → `next/link`) to `Nav` (desktop + mobile) and `Footer`, alongside the Sanity-driven in-page section links.
+
+**Card uniformity + covers (post-review fix):** `BlogCard` clamps title (2 lines) + excerpt (3 lines) via `min-h-[Nlh]`, pins tags to a shared bottom, and **always renders a 3:2 cover**; imageless posts get `components/ui/CoverFallback.tsx` (branded gradient + dotted texture + wordmark). **The detail page renders `CoverFallback` too** when no cover. The 2 seeded posts got **on-brand AI cover images** via the Sanity `generate_image` MCP (somatic dune forms; woven roots/fibers). **Slugs enforced URL-safe** (`post.slug` custom `slugify` + regex validation) — a space in a slug 404s the detail route.
+
+**Hosted Studio DEPLOYED:** **https://rickireign.sanity.studio** (`studioHost` + `deployment.appId` in `studio/sanity.cli.ts`) — the **no-code editor for Ricki**. Add/edit/remove posts in the browser; live within 60s ISR. Add/remove round-trip verified end-to-end. Same `production` dataset as the site.
+
+**One-click AI covers:** `@sanity/assist` enabled in the Studio; `post.coverImage` has a pre-filled brand prompt + `aiAssist.imageInstructionField`. Editors click ✨ Generate for on-brand art — runs in the authenticated Studio session, no app write token (site stays token-less). Experimental; `CoverFallback` is the safety net. **BLOCKED:** the Studio Generate button errors "Project is not allowed to use this feature" — AI image gen is a Sanity **plan/add-on** entitlement (enable in sanity.io/manage → Plan). Left in place per user ("decide later"); works once enabled. The **MCP `generate_image` path is entitled** and made the 2 seeded covers — use it to generate covers on request meanwhile.
+
+**Tags — free-type + preset picker:** custom `studio/components/TagInput.tsx` (wired on `post.tags`) lets editors free-type any tag AND pick from preset `POST_TAGS` (`studio/schemaTypes/postTags.ts`: Essay, Note, Somatic Leadership, Ancestral Wisdom, Organizational Leadership, Practice, Community, Ritual & Rest) via datalist + one-click chips. **Stores plain strings** so `/journal/tag` queries/types are unchanged (native `options.list` = checkboxes only, no free-type; `sanity-plugin-tags` stores objects → would ripple). Add a preset by appending the list + redeploying. No-code editor-managed tags (reference `tag` doc type) deferred.
+
+**Seeded content (Sanity MCP, published):** `author` **Ricki Reign** (`_id author-ricki-reign`) + 2 posts — `leading-from-the-body` (tags: Somatic Leadership, Essay) and `ancestral-remembering` (tags: Ancestral Wisdom, Essay). Author published before posts (reference order). On-brand placeholders, replaceable in the Studio.
+
+**Runtime-verified locally (dev server + curl):** `/journal` lists posts; detail `<title>` + `og:type=article` + body + cover/fallback render; `/journal/tag/essay` filters; `/blog/*` 308-redirects to `/journal/*`; bad slug + bad tag → 404; sitemap includes post + tag URLs; robots correct.
+
+## Design spec
+
+`docs/superpowers/specs/2026-06-23-phase-4-blog-design.md` — the approved Phase 4 design + the content decisions (one flexible `post` schema, Journal label, indexable tag pages, Option B SEO).
+
+## Phase 5 — Verify & ship (the goal)
+
+Per PLAN.md §7: Playwright flows (newsletter happy + invalid + DOI, contact submit, out-links resolve, nav, **blog: list → detail → tag → 404**, responsive, no console errors) → `/ship-check` → Vercel + Cloudflare prod deploy. This is where the **test runner finally lands** (none today — see open items).
 
 ## Deploy env status
+- **Vercel:** Phase 3 env set for production + the `003-forms-and-legal` preview branch. Public keys (GA id, Turnstile site key, Calendly URL) default in `lib/env.ts`, so prod works without build vars. Blog adds **no new env or CSP origins** (Sanity image CDN already allowed).
+- **Cloudflare:** runtime secrets set via `wrangler secret put` (persist across `npm run deploy`). Public keys default in code.
 
-- **Vercel:** Phase 3 env set for **production** + the `003-forms-and-legal` preview branch (`BREVO_API_KEY`, `BREVO_LIST_ID`=3, `BREVO_DOI_TEMPLATE_ID`=1, `BREVO_SENDER_EMAIL`, `TURNSTILE_SECRET_KEY` `--sensitive`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `NEXT_PUBLIC_CALENDLY_URL`). **TODO at merge:** add the same env to the new `fix/phase-3-forms-legal` preview branch if you want its preview deploy functional, and confirm no stale numeric GA var overrides the `G-` default. Public keys (GA id, Turnstile site key, Calendly URL) all default in `lib/env.ts`, so prod works without build vars.
-- **Cloudflare:** runtime secrets SET via `wrangler secret put` (account `gregoriomoreta4@gmail.com`); persist across `npm run deploy`. Public keys default in code.
-
-## Phase 4 — Blog (the goal)
-
-Per PLAN.md §3, §4 (`post`/`author` schemas already exist), §7. Routes `/blog` + `/blog/[slug]`, `BlogCard`, Portable Text for `post.body`, cover images via `SanityImage`, ordered by `publishedAt`, per-post SEO/OG. Decide content direction with Ricki (PLAN open #5) before building.
-
-## Gotchas specific to Phase 4 (read before coding)
-- **`post`/`author` schemas already in the Studio** (Phase 1) — confirm fields against `studio/schemaTypes` before assuming; seed via Sanity MCP (publish `author` before `post`).
-- **Portable Text:** reuse the `MeetReign` `about.body` `PortableText` + component-map pattern.
-- **Section nav:** use `SectionLink` for any new in-page anchors (keeps URLs clean + cross-page nav working).
-- **ISR** is 60s time-based; consider the deferred publish webhook so new posts appear promptly.
+## Gotchas specific to Phase 4 (don't re-learn)
+- **`tag` is a RESERVED key in Sanity `QueryParams`** (typed `never` — it's a fetch-option name). A GROQ param named `$tag` fails tsc. `POSTS_BY_TAG_QUERY` uses **`$tagName`**; pass `{ tagName: tag }`.
+- **Tags are free-text strings**, slugified for URLs (`slugifyTag`) and resolved back via `TAGS_QUERY` + `resolveTagSlug`. Two tags slugifying to the same value would collide (first match wins) — fine at this scale.
+- **Portable Text inline images** size from the asset ref (`image-<id>-<W>x<H>-<fmt>`) since the body query returns the raw block (no `asset->metadata`). If that parse ever fails it falls back to 1280×853.
+- **BlogCard cover degrades** to a text-only card with no asset (consistent with the home sections' no-assets pattern) — no posts have covers yet.
+- **`generateStaticParams` pre-renders known posts/tags at build**; new posts appear within the 60s ISR window. The signature-verified publish webhook is still deferred (would make them appear instantly).
+- **`generate_image` MCP writes to the DRAFT** — must `publish_documents` afterwards to make the cover live.
+- **Redeploy the hosted Studio** (`cd studio && npx sanity deploy`) after any schema/structure change so editors see new fields.
 
 ## Open questions / deferred (still matter)
-- **Brevo prod sender** — verify a `rickireign.com` domain sender; DOI + contact emails currently send FROM a Brevo `brevosend.com` wrapper of the gmail.
-- **contactEmail** (PLAN open #3): `welcome@rickireign.com` is live + monitored (Brevo shows it opened); confirm it's the canonical address vs `hello@`.
+- **Test runner** — none yet; Phase 5 adds Playwright. Blog correctness is currently covered only by the manual curl smoke test above.
+- **Sanity revalidation webhook + draft/preview** — deferred; posts rely on 60s ISR.
+- **Real blog content + cover images** — the 2 seeded posts are placeholders; Ricki replaces/extends in the Studio. Cover images optional.
+- **Brevo prod sender** — verify a `rickireign.com` domain sender (DOI + contact still send via a `brevosend.com` wrapper).
 - **Lawyer review** of `/privacy` + `/terms` before public launch.
-- **Real content + assets** (PLAN open #6), **section names** (open #1), **Patreon** (open #4), **Sanity revalidation webhook + draft/preview** — deferred.
-- **No test runner** — security-critical invariants covered only by manual/live testing; Phase 5 adds Playwright. Consider unit coverage for `lib/{validation,brevo,rate-limit}` if a runner lands sooner.
-- **Calendly** event is real/active now; the URL is the personal account (`gregorioe-moreta/discovery-call`) — swap if Ricki uses a different account.
+- **contactEmail** — `welcome@rickireign.com` live/monitored; confirm canonical vs `hello@`.
+- **Calendly** — real/active Discovery Call event; URL is the personal account (`gregorioe-moreta/discovery-call`) — swap if Ricki uses another.
 
-## If you're starting Phase 4 cold, know this
-- Production on `main` is green on both targets; content is real and queryable via the Sanity MCP (`perspective: "published"`).
+## If you're starting Phase 5 cold, know this
+- Production on `main` is green on both targets; content is real and queryable via the Sanity MCP (`perspective: "published"`), now including `author` + 2 `post`s.
 - Schema changes need `cd studio && npm run schema:deploy`; Studio runs at `:3333`.
 - Run the end-of-phase ritual with the **`/phase-handoff`** skill.
-- Subagents can't do git/network writes — run git/`gh`/deploy from the main session. Never delete branches. See `CLAUDE.md` for the full rule set + Phase 0–3 gotchas.
+- Subagents can't do git/network writes — run git/`gh`/deploy from the main session. Never delete branches. See `CLAUDE.md` for the full rule set + Phase 0–4 gotchas.

@@ -6,7 +6,7 @@ Loaded every session. This is the durable operating memory. Two companion docs a
 - **`docs/SESSION_STATE.md`** — transient handoff for the phase currently in flight. Read it to see where we are.
 
 ## What this is
-A calm, premium marketing site establishing **Ricki Reign** as a founder, facilitator, and organizational leader; lets people follow her (newsletter + socials) and routes them to work with her. A visitor should leave able to answer: who is Reign, what does she do, how do I work with her. **No payments, no user accounts.** Single-scroll home + `/blog` (later) + `/privacy` `/terms`.
+A calm, premium marketing site establishing **Ricki Reign** as a founder, facilitator, and organizational leader; lets people follow her (newsletter + socials) and routes them to work with her. A visitor should leave able to answer: who is Reign, what does she do, how do I work with her. **No payments, no user accounts.** Single-scroll home + `/journal` (blog) + `/privacy` `/terms`.
 
 ## Stack & architecture
 - **Next.js 16 (App Router) + TypeScript strict + Tailwind v4** (tokens in `app/globals.css` `@theme`, no `tailwind.config.ts`). React 19. Top-level `app/` `components/` `lib/` — **no `src/`**, import alias `@/*`.
@@ -78,7 +78,7 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Cloudflare:** Worker `rickireign` (prod `https://rickireign.gregoriomoreta4.workers.dev`). Dashboard deploy command = `npm run deploy`.
 
 ## Build phases (docs/PLAN.md §7)
-0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (PR #4) · 3 Forms & legal ✓ (PR #5 merged; fix/hardening round in `fix/phase-3-forms-legal`) · **4 Blog** · 5 Verify & ship.
+0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (PR #4) · 3 Forms & legal ✓ (PR #5 + fix-round PR #6, both merged) · 4 Blog ✓ (branch `004-blog`, PR open, not merged) · **5 Verify & ship**.
 
 ## Phase 3 facts (Forms & legal — don't re-learn)
 - **Brevo:** account `gregorioe.moreta@gmail.com`. Newsletter list id `3` ("Newsletter — rickireign.com"); DOI template id `1` (tagged `optin`, confirm button → `{{ doubleoptin }}` — required for forms hosted OUTSIDE Brevo). Transactional sender = `BREVO_SENDER_EMAIL` (currently the verified gmail; verify a `rickireign.com` domain sender for prod). Server secrets read straight from `process.env` in `lib/{brevo,turnstile}.ts` (imported only by `app/api/{newsletter,contact}/route.ts`), never `lib/env.ts`.
@@ -95,6 +95,23 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Rate limiting** (`lib/rate-limit.ts`) is in-memory/per-instance only — won't persist across Cloudflare isolates; it's a layer on Turnstile, not a global guarantee.
 - **Security headers** now include **HSTS**. **Legal** text is expanded for GDPR/CCPA + NY governing law, but still wants a lawyer review before public launch.
 - **End-of-phase ritual:** use the **`/phase-handoff`** skill (`.claude/skills/phase-handoff/`).
+
+## Phase 4 facts (Blog / "Journal" — don't re-learn)
+- **Routes:** `/journal` (index), `/journal/[slug]` (detail, `generateStaticParams` + per-post `generateMetadata`), `/journal/tag/[tag]` (indexable tag pages). Plus `app/sitemap.ts` + `app/robots.ts`. All Server Components, 60s ISR via the existing `sanityFetch`. The folder is `app/journal/`; **`/blog/*` 308-redirects to `/journal/*`** (`next.config.ts`). (Internal component dir is still `components/blog/` — name only, not a URL.)
+- **`tag` is a RESERVED key in Sanity `QueryParams`** (typed `never`). A GROQ param `$tag` fails tsc — `POSTS_BY_TAG_QUERY` uses **`$tagName`** (`{ tagName: tag }`).
+- **Tags are free-text strings** → slugified for URLs (`lib/tags.ts` `slugifyTag`), resolved back via `TAGS_QUERY` + `resolveTagSlug`.
+- **Per-post SEO = the optional `seo` object on `post`** (added Phase 4, schema deployed). `generateMetadata` uses it if filled, else derives `title`/`excerpt`/`coverImage` (Option B). Same default-or-override rule as the rest of the content model.
+- **`PostBody`** is a richer Portable Text map than `MeetReign` (headings, lists, blockquote, link marks with external `target=_blank rel=noopener`, inline images sized from the asset ref `image-<id>-<W>x<H>-<fmt>`). Reuse it; don't re-derive the block map.
+- **Seeded content:** `author` `Ricki Reign` (`_id author-ricki-reign`) + 2 published posts (`leading-from-the-body`, `ancestral-remembering`). Placeholders — Ricki replaces in the Studio. Publish author before posts (reference order).
+- **"Journal"** is the nav label (not "Blog"); a real route → `next/link` in `Nav` + `Footer`, NOT a `SectionLink` anchor.
+- Blog adds **no new env or CSP origins** (Sanity image CDN already allowed).
+- **Card uniformity:** `BlogCard` clamps title to 2 lines + excerpt to 3 lines (reserved via `min-h-[Nlh]`), pins tags to a common bottom, and **always renders a 3:2 cover** — posts with no image get `CoverFallback` (branded gradient panel). The **detail page also renders `CoverFallback`** when a post has no cover (same consistency). Mixed cover/no-cover cards looked ragged; don't reintroduce a conditional cover.
+- **Slugs are enforced URL-safe** (`post.slug` has a custom `slugify` + a `validation` regex `^[a-z0-9-]+$`). A slug with a space 404s the `/journal/[slug]` route — this guard prevents it on manual entry.
+- **Hosted Studio is DEPLOYED** at **https://rickireign.sanity.studio** (`studioHost: "rickireign"` + `deployment.appId` in `studio/sanity.cli.ts`). This is the **no-code editor for Ricki** (add/edit/remove posts in the browser; changes hit the live site within the 60s ISR window). Reads/writes the **same `production` dataset** as the site — no separate staging content. Redeploy Studio after schema/structure changes: `cd studio && npx sanity deploy`.
+- **AI cover images** for the 2 seeded posts were made via the Sanity **`generate_image` MCP** (on-brand abstract, no faces/text). Gotcha: `generate_image` writes the asset to the **DRAFT** — you must `publish_documents` to make the cover live.
+- **One-click AI covers in the Studio:** `@sanity/assist` is installed + `assist()` is in `studio/sanity.config.ts`; `post.coverImage` has an `instruction` prompt subfield + `options.aiAssist.imageInstructionField` (pre-filled with the brand art direction). Editors click **✨ Generate** on the cover to get on-brand art — runs through the authenticated Studio session, **no app/site write token** (token-less site preserved). AI Assist is an **experimental** Sanity feature. `CoverFallback` remains the silent safety net if a post still has no image.
+  - **GOTCHA / blocked:** the in-Studio Generate currently errors **"Project is not allowed to use this feature"** — AI **image** generation is gated by the Sanity **plan/add-on** (enable in sanity.io/manage → Plan). The button + wiring are left in place (user chose "decide later") and will work once enabled. The **agent/MCP `generate_image` path IS entitled** for this project (it made the 2 seeded covers) — use that to generate covers on request meanwhile.
+- **Tags: free-type + preset picker.** Custom `studio/components/TagInput.tsx` (wired via `components: { input }` on `post.tags`) lets editors free-type any tag AND pick from the preset `POST_TAGS` (`studio/schemaTypes/postTags.ts`) shown as a datalist + one-click chips. **Stores plain strings**, so `/journal/tag` queries/types are unchanged. (Native `options.list` only renders checkboxes — no free-type; `sanity-plugin-tags` stores objects — would ripple into queries. Hence the custom input.) Add a preset by appending `POST_TAGS` + redeploy. No-code editor-managed tags (reference `tag` doc type) deferred.
 
 ## Don't
 Don't add Supabase (this is Sanity). Don't invent brand values (DESIGN.md). Don't embed the Studio. Don't expand scope past the approved plan without checking in. Don't reach for a dependency the stack already covers.

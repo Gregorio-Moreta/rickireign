@@ -116,6 +116,31 @@ export interface SimpleSection {
   body?: string;
 }
 
+export interface Author {
+  name?: string;
+  image?: SanityImage;
+  bio?: string;
+}
+
+/** Card-sized post shape (blog index + tag pages). */
+export interface PostListItem {
+  _id: string;
+  title?: string;
+  slug?: string;
+  excerpt?: string;
+  coverImage?: SanityImage;
+  publishedAt?: string;
+  tags?: string[];
+  author?: Pick<Author, "name" | "image">;
+}
+
+/** Full post shape (detail page). */
+export interface Post extends PostListItem {
+  body?: PortableTextValue;
+  author?: Author;
+  seo?: Seo;
+}
+
 export interface HomePage {
   hero?: Hero;
   guidingQuestions?: GuidingQuestion[];
