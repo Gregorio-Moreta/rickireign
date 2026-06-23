@@ -105,6 +105,9 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Seeded content:** `author` `Ricki Reign` (`_id author-ricki-reign`) + 2 published posts (`leading-from-the-body`, `ancestral-remembering`). Placeholders — Ricki replaces in the Studio. Publish author before posts (reference order).
 - **"Journal"** is the nav label (not "Blog"); a real route → `next/link` in `Nav` + `Footer`, NOT a `SectionLink` anchor.
 - Blog adds **no new env or CSP origins** (Sanity image CDN already allowed).
+- **Card uniformity:** `BlogCard` clamps title to 2 lines + excerpt to 3 lines (reserved via `min-h-[Nlh]`), pins tags to a common bottom, and **always renders a 3:2 cover** — posts with no image get `CoverFallback` (branded gradient panel). Mixed cover/no-cover cards looked ragged; don't reintroduce a conditional cover.
+- **Hosted Studio is DEPLOYED** at **https://rickireign.sanity.studio** (`studioHost: "rickireign"` + `deployment.appId` in `studio/sanity.cli.ts`). This is the **no-code editor for Ricki** (add/edit/remove posts in the browser; changes hit the live site within the 60s ISR window). Reads/writes the **same `production` dataset** as the site — no separate staging content. Redeploy Studio after schema/structure changes: `cd studio && npx sanity deploy`.
+- **AI cover images** for the 2 seeded posts were made via the Sanity **`generate_image` MCP** (on-brand abstract, no faces/text). Gotcha: `generate_image` writes the asset to the **DRAFT** — you must `publish_documents` to make the cover live.
 
 ## Don't
 Don't add Supabase (this is Sanity). Don't invent brand values (DESIGN.md). Don't embed the Studio. Don't expand scope past the approved plan without checking in. Don't reach for a dependency the stack already covers.

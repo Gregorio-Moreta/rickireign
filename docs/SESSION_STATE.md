@@ -37,6 +37,10 @@ git push -u origin 005-verify-ship
 
 **Nav:** added a top-level **"Journal"** link (real route → `next/link`) to `Nav` (desktop + mobile) and `Footer`, alongside the Sanity-driven in-page section links.
 
+**Card uniformity + covers (post-review fix):** `BlogCard` clamps title (2 lines) + excerpt (3 lines) via `min-h-[Nlh]`, pins tags to a shared bottom, and **always renders a 3:2 cover**; imageless posts get `components/ui/CoverFallback.tsx` (branded gradient + dotted texture + wordmark). The 2 seeded posts got **on-brand AI cover images** via the Sanity `generate_image` MCP (somatic dune forms; woven roots/fibers).
+
+**Hosted Studio DEPLOYED:** **https://rickireign.sanity.studio** (`studioHost` + `deployment.appId` in `studio/sanity.cli.ts`) — the **no-code editor for Ricki**. Add/edit/remove posts in the browser; live within 60s ISR. Add/remove round-trip verified end-to-end. Same `production` dataset as the site.
+
 **Seeded content (Sanity MCP, published):** `author` **Ricki Reign** (`_id author-ricki-reign`) + 2 posts — `leading-from-the-body` (tags: Somatic Leadership, Essay) and `ancestral-remembering` (tags: Ancestral Wisdom, Essay). Author published before posts (reference order). On-brand placeholders, replaceable in the Studio.
 
 **Runtime-verified locally (dev server + curl):** `/blog` lists both; detail `<title>` + `og:type=article` + body render; `/blog/tag/essay` shows both; bad slug + bad tag → 404; sitemap includes post + tag URLs; robots correct.
@@ -59,6 +63,8 @@ Per PLAN.md §7: Playwright flows (newsletter happy + invalid + DOI, contact sub
 - **Portable Text inline images** size from the asset ref (`image-<id>-<W>x<H>-<fmt>`) since the body query returns the raw block (no `asset->metadata`). If that parse ever fails it falls back to 1280×853.
 - **BlogCard cover degrades** to a text-only card with no asset (consistent with the home sections' no-assets pattern) — no posts have covers yet.
 - **`generateStaticParams` pre-renders known posts/tags at build**; new posts appear within the 60s ISR window. The signature-verified publish webhook is still deferred (would make them appear instantly).
+- **`generate_image` MCP writes to the DRAFT** — must `publish_documents` afterwards to make the cover live.
+- **Redeploy the hosted Studio** (`cd studio && npx sanity deploy`) after any schema/structure change so editors see new fields.
 
 ## Open questions / deferred (still matter)
 - **Test runner** — none yet; Phase 5 adds Playwright. Blog correctness is currently covered only by the manual curl smoke test above.
