@@ -19,11 +19,12 @@ git push -u origin 005-verify-ship
 
 ## What Phase 4 delivered (on `004-blog`)
 
-**Routes (all Server Components, App Router; 60s ISR via existing `sanityFetch`):**
-- `app/blog/page.tsx` — Journal index. All published posts `order(publishedAt desc)`, `PostGrid` of `BlogCard`s, graceful empty state, static metadata.
-- `app/blog/[slug]/page.tsx` — post detail. `generateStaticParams` (pre-renders known slugs), `generateMetadata` (per-post SEO, article OG), `notFound()` on unknown slug. Cover, title, date·author meta, tags footer, Portable Text body.
-- `app/blog/tag/[tag]/page.tsx` — indexable tag-filtered list. Static params from distinct tags; per-tag metadata; `notFound()` for unknown tag.
+**Routes (all Server Components, App Router; 60s ISR via existing `sanityFetch`). Route is `/journal` — `/blog/*` 308-redirects (`next.config.ts`):**
+- `app/journal/page.tsx` — Journal index. All published posts `order(publishedAt desc)`, `PostGrid` of `BlogCard`s, graceful empty state, static metadata.
+- `app/journal/[slug]/page.tsx` — post detail. `generateStaticParams` (pre-renders known slugs), `generateMetadata` (per-post SEO, article OG), `notFound()` on unknown slug. Cover (or `CoverFallback`), title, date·author meta, tags footer, Portable Text body.
+- `app/journal/tag/[tag]/page.tsx` — indexable tag-filtered list. Static params from distinct tags; per-tag metadata; `notFound()` for unknown tag.
 - `app/sitemap.ts` + `app/robots.ts` — static routes + every post + every tag page; robots allow-all → sitemap.
+- (Component dir stays `components/blog/` — internal name, not a URL.)
 
 **Components / libs:**
 - `components/ui/BlogCard.tsx` — whole-card link (title `after:absolute` overlay) + independently-clickable tag links; cover degrades gracefully to a text-only card when no asset.
@@ -37,17 +38,17 @@ git push -u origin 005-verify-ship
 
 **Nav:** added a top-level **"Journal"** link (real route → `next/link`) to `Nav` (desktop + mobile) and `Footer`, alongside the Sanity-driven in-page section links.
 
-**Card uniformity + covers (post-review fix):** `BlogCard` clamps title (2 lines) + excerpt (3 lines) via `min-h-[Nlh]`, pins tags to a shared bottom, and **always renders a 3:2 cover**; imageless posts get `components/ui/CoverFallback.tsx` (branded gradient + dotted texture + wordmark). The 2 seeded posts got **on-brand AI cover images** via the Sanity `generate_image` MCP (somatic dune forms; woven roots/fibers).
+**Card uniformity + covers (post-review fix):** `BlogCard` clamps title (2 lines) + excerpt (3 lines) via `min-h-[Nlh]`, pins tags to a shared bottom, and **always renders a 3:2 cover**; imageless posts get `components/ui/CoverFallback.tsx` (branded gradient + dotted texture + wordmark). **The detail page renders `CoverFallback` too** when no cover. The 2 seeded posts got **on-brand AI cover images** via the Sanity `generate_image` MCP (somatic dune forms; woven roots/fibers). **Slugs enforced URL-safe** (`post.slug` custom `slugify` + regex validation) — a space in a slug 404s the detail route.
 
 **Hosted Studio DEPLOYED:** **https://rickireign.sanity.studio** (`studioHost` + `deployment.appId` in `studio/sanity.cli.ts`) — the **no-code editor for Ricki**. Add/edit/remove posts in the browser; live within 60s ISR. Add/remove round-trip verified end-to-end. Same `production` dataset as the site.
 
 **One-click AI covers:** `@sanity/assist` enabled in the Studio; `post.coverImage` has a pre-filled brand prompt + `aiAssist.imageInstructionField`. Editors click ✨ Generate for on-brand art — runs in the authenticated Studio session, no app write token (site stays token-less). Experimental; `CoverFallback` is the safety net. **BLOCKED:** the Studio Generate button errors "Project is not allowed to use this feature" — AI image gen is a Sanity **plan/add-on** entitlement (enable in sanity.io/manage → Plan). Left in place per user ("decide later"); works once enabled. The **MCP `generate_image` path is entitled** and made the 2 seeded covers — use it to generate covers on request meanwhile.
 
-**Preset tags:** `POST_TAGS` in `post.ts` constrains tags to a fixed list (Essay, Note, Somatic Leadership, Ancestral Wisdom, Organizational Leadership, Practice, Community, Ritual & Rest) for consistent `/blog/tag` grouping. Add tags by appending the list + redeploying schema/Studio. No-code editor-managed tags (reference `tag` doc type) deferred.
+**Tags — free-type + preset picker:** custom `studio/components/TagInput.tsx` (wired on `post.tags`) lets editors free-type any tag AND pick from preset `POST_TAGS` (`studio/schemaTypes/postTags.ts`: Essay, Note, Somatic Leadership, Ancestral Wisdom, Organizational Leadership, Practice, Community, Ritual & Rest) via datalist + one-click chips. **Stores plain strings** so `/journal/tag` queries/types are unchanged (native `options.list` = checkboxes only, no free-type; `sanity-plugin-tags` stores objects → would ripple). Add a preset by appending the list + redeploying. No-code editor-managed tags (reference `tag` doc type) deferred.
 
 **Seeded content (Sanity MCP, published):** `author` **Ricki Reign** (`_id author-ricki-reign`) + 2 posts — `leading-from-the-body` (tags: Somatic Leadership, Essay) and `ancestral-remembering` (tags: Ancestral Wisdom, Essay). Author published before posts (reference order). On-brand placeholders, replaceable in the Studio.
 
-**Runtime-verified locally (dev server + curl):** `/blog` lists both; detail `<title>` + `og:type=article` + body render; `/blog/tag/essay` shows both; bad slug + bad tag → 404; sitemap includes post + tag URLs; robots correct.
+**Runtime-verified locally (dev server + curl):** `/journal` lists posts; detail `<title>` + `og:type=article` + body + cover/fallback render; `/journal/tag/essay` filters; `/blog/*` 308-redirects to `/journal/*`; bad slug + bad tag → 404; sitemap includes post + tag URLs; robots correct.
 
 ## Design spec
 
