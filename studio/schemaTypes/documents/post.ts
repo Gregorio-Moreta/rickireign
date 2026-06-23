@@ -49,6 +49,9 @@ export const post = defineType({
       of: [defineArrayMember({ type: "string" })],
       options: { layout: "tags" },
     }),
+    // Optional per-post SEO overrides. Left blank, the app derives metadata from
+    // title / excerpt / coverImage (see app/blog/[slug]/page.tsx).
+    defineField({ name: "seo", type: "seo" }),
   ],
   preview: {
     select: { title: "title", subtitle: "publishedAt", media: "coverImage" },

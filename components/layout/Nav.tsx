@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Container } from "@/components/layout/Container";
 import { SectionLink } from "@/components/layout/SectionLink";
 import { cn } from "@/lib/cn";
@@ -67,6 +68,12 @@ export function Nav({ wordmark, links }: NavProps) {
               </SectionLink>
             </li>
           ))}
+          {/* Journal is a real route, not an in-page anchor. */}
+          <li>
+            <Link href="/blog" className={linkClasses}>
+              Journal
+            </Link>
+          </li>
         </ul>
 
         {/* Mobile toggle */}
@@ -110,6 +117,15 @@ export function Nav({ wordmark, links }: NavProps) {
                 </SectionLink>
               </li>
             ))}
+            <li>
+              <Link
+                href="/blog"
+                onClick={() => setOpen(false)}
+                className={cn(linkClasses, "block py-1")}
+              >
+                Journal
+              </Link>
+            </li>
           </ul>
         </Container>
       </div>
