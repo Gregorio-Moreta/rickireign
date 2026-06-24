@@ -15,10 +15,9 @@ const toSectionId = (anchor: string) => anchor.replace(/^#/, "");
  * is never link-less. Real data is passed in from the server layout.
  */
 const FALLBACK_LINKS = [
-  { _key: "f1", label: "The Practice", anchor: "#practice" },
-  { _key: "f2", label: "Founded & Led", anchor: "#founded" },
-  { _key: "f3", label: "About", anchor: "#about" },
-  { _key: "f4", label: "Connect", anchor: "#connect" },
+  { _key: "f1", label: "About", anchor: "#about" },
+  { _key: "f2", label: "The Work", anchor: "#work" },
+  { _key: "f3", label: "Connect", anchor: "#connect" },
 ];
 
 interface NavProps {

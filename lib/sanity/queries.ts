@@ -10,20 +10,34 @@ export const SITE_SETTINGS_QUERY = defineQuery(`*[_type == "siteSettings"][0]{
   seo
 }`);
 
-/** The single home-page document, with referenced businesses expanded. */
+/** The single home-page document, with The Work's businesses expanded. */
 export const HOME_PAGE_QUERY = defineQuery(`*[_type == "homePage"][0]{
   hero,
   guidingQuestions,
-  practice,
-  foundedAndLed{
+  theWork{
     title,
     intro,
-    businesses[]->{ _id, name, tagline, description, image, externalUrl, order }
+    businesses[]->{ _id, name, tagline, description, image, externalUrl, order },
+    somatics
   },
   about,
   whoIsThisFor,
   newsletter,
   connect,
+  seo
+}`);
+
+/** The Somatics page (singleton) — the practice, framed as bio, with the only
+ *  booking CTA on the whole site. */
+export const SOMATICS_PAGE_QUERY = defineQuery(`*[_type == "somaticsPage"][0]{
+  label,
+  title,
+  intro,
+  body,
+  offerings,
+  portrait,
+  ctaLabel,
+  ctaTarget,
   seo
 }`);
 

@@ -12,7 +12,7 @@ const BREAKPOINTS = [
   { name: "desktop", width: 1440, height: 900 },
 ];
 
-const PAGES = ["/", "/journal"];
+const PAGES = ["/", "/somatics", "/journal"];
 
 for (const bp of BREAKPOINTS) {
   test.describe(`${bp.name} (${bp.width}px)`, () => {

@@ -65,21 +65,6 @@ export interface GuidingQuestion {
   note?: string;
 }
 
-export interface PracticeItem {
-  _key: string;
-  title: string;
-  description?: string;
-  icon?: string;
-}
-
-export interface Practice {
-  title?: string;
-  intro?: string;
-  items?: PracticeItem[];
-  ctaLabel?: string;
-  ctaTarget?: string;
-}
-
 export interface Business {
   _id: string;
   name?: string;
@@ -90,10 +75,40 @@ export interface Business {
   order?: number;
 }
 
-export interface FoundedAndLed {
+/** The Somatics card inside The Work — links internally to /somatics. */
+export interface SomaticsCard {
+  name?: string;
+  tagline?: string;
+  description?: string;
+  linkLabel?: string;
+}
+
+/** The Work — merged section (the two businesses + the Somatics card). */
+export interface TheWork {
   title?: string;
   intro?: string;
   businesses?: Business[];
+  somatics?: SomaticsCard;
+}
+
+/** An offering listed on the Somatics page. */
+export interface Offering {
+  _key: string;
+  title: string;
+  description?: string;
+}
+
+/** The Somatics page (singleton) — practice framed as bio + the only booking CTA. */
+export interface SomaticsPage {
+  label?: string;
+  title?: string;
+  intro?: string;
+  body?: PortableTextValue;
+  offerings?: Offering[];
+  portrait?: SanityImage;
+  ctaLabel?: string;
+  ctaTarget?: string;
+  seo?: Seo;
 }
 
 export interface About {
@@ -144,8 +159,7 @@ export interface Post extends PostListItem {
 export interface HomePage {
   hero?: Hero;
   guidingQuestions?: GuidingQuestion[];
-  practice?: Practice;
-  foundedAndLed?: FoundedAndLed;
+  theWork?: TheWork;
   about?: About;
   whoIsThisFor?: WhoIsThisFor;
   newsletter?: SimpleSection;

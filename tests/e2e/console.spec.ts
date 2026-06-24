@@ -25,12 +25,12 @@ function collectErrors(page: Page): string[] {
   return errors;
 }
 
-test("home, legal, and journal render without console errors", async ({
+test("home, somatics, legal, and journal render without console errors", async ({
   page,
 }) => {
   const errors = collectErrors(page);
 
-  for (const path of ["/", "/privacy", "/terms", "/journal"]) {
+  for (const path of ["/", "/somatics", "/privacy", "/terms", "/journal"]) {
     await page.goto(path, { waitUntil: "load" });
     await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
   }

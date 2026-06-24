@@ -43,7 +43,7 @@ test.describe("Cross-route nav", () => {
     // Lands back on the single-scroll home (HashScroll strips the hash on arrival).
     await expect(page).toHaveURL(/\/(#.*)?$/);
     // A home-only section confirms we left /privacy for the single-scroll home.
-    await expect(page.locator("#practice")).toBeAttached();
+    await expect(page.locator("#work")).toBeAttached();
   });
 });
 

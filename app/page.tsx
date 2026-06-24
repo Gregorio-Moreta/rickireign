@@ -3,9 +3,8 @@ import { HOME_PAGE_QUERY, SITE_SETTINGS_QUERY } from "@/lib/sanity/queries";
 import type { HomePage, SiteSettings } from "@/lib/sanity/types";
 import { Hero } from "@/components/sections/Hero";
 import { GuidingQuestions } from "@/components/sections/GuidingQuestions";
-import { PracticeSection } from "@/components/sections/PracticeSection";
-import { FoundedAndLed } from "@/components/sections/FoundedAndLed";
 import { MeetReign } from "@/components/sections/MeetReign";
+import { TheWork } from "@/components/sections/TheWork";
 import { WhoIsThisFor } from "@/components/sections/WhoIsThisFor";
 import { Newsletter } from "@/components/sections/Newsletter";
 import { Connect } from "@/components/sections/Connect";
@@ -32,9 +31,8 @@ export default async function Home() {
       <HashScroll />
       <Hero data={home.hero} />
       <GuidingQuestions questions={home.guidingQuestions} />
-      <PracticeSection data={home.practice} />
-      <FoundedAndLed data={home.foundedAndLed} />
       <MeetReign data={home.about} />
+      <TheWork data={home.theWork} />
       <WhoIsThisFor data={home.whoIsThisFor} />
       <Newsletter data={home.newsletter} />
       <Connect
