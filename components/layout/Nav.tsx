@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Container } from "@/components/layout/Container";
 import { SectionLink } from "@/components/layout/SectionLink";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { cn } from "@/lib/cn";
 import type { SiteSettings } from "@/lib/sanity/types";
 
@@ -58,40 +59,44 @@ export function Nav({ wordmark, links }: NavProps) {
           {wordmark ?? "Ricki Reign"}
         </SectionLink>
 
-        {/* Desktop links */}
-        <ul className="hidden items-center gap-8 md:flex">
-          {navLinks.map((link) => (
-            <li key={link._key}>
-              <SectionLink sectionId={toSectionId(link.anchor)} className={linkClasses}>
-                {link.label}
-              </SectionLink>
+        {/* Right cluster: desktop links + theme toggle (always) + mobile menu */}
+        <div className="flex items-center gap-1 md:gap-6">
+          <ul className="hidden items-center gap-8 md:flex">
+            {navLinks.map((link) => (
+              <li key={link._key}>
+                <SectionLink sectionId={toSectionId(link.anchor)} className={linkClasses}>
+                  {link.label}
+                </SectionLink>
+              </li>
+            ))}
+            {/* Journal is a real route, not an in-page anchor. */}
+            <li>
+              <Link href="/journal" className={linkClasses}>
+                Journal
+              </Link>
             </li>
-          ))}
-          {/* Journal is a real route, not an in-page anchor. */}
-          <li>
-            <Link href="/journal" className={linkClasses}>
-              Journal
-            </Link>
-          </li>
-        </ul>
+          </ul>
 
-        {/* Mobile toggle */}
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((v) => !v)}
-          className={cn(
-            "inline-flex h-10 w-10 items-center justify-center rounded md:hidden",
-            "cursor-pointer text-on-surface",
-            "transition-colors duration-200 hover:bg-surface-container",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container",
-            "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-          )}
-        >
-          {open ? <CloseIcon /> : <MenuIcon />}
-        </button>
+          <ThemeToggle />
+
+          {/* Mobile menu toggle */}
+          <button
+            type="button"
+            aria-expanded={open}
+            aria-controls="mobile-nav"
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              "inline-flex h-10 w-10 items-center justify-center rounded md:hidden",
+              "cursor-pointer text-on-surface",
+              "transition-colors duration-200 hover:bg-surface-container",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container",
+              "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+            )}
+          >
+            {open ? <CloseIcon /> : <MenuIcon />}
+          </button>
+        </div>
       </Container>
 
       {/* Mobile panel */}

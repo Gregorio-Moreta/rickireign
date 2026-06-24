@@ -14,13 +14,10 @@ export function WhoIsThisFor({ data }: { data: WhoIsThisForData | undefined }) {
   const points = (data.points ?? []).filter(Boolean);
 
   return (
-    <Section
-      aria-label={data.title ?? "Who is this for?"}
-      className="bg-earth-charcoal text-inverse-on-surface"
-    >
+    <Section aria-label={data.title ?? "Who is this for?"} tone="contrast">
       <Container className="flex flex-col gap-stack">
         {data.title ? (
-          <h2 className="max-w-2xl font-display text-headline-lg-mobile text-inverse-on-surface md:text-headline-lg text-balance">
+          <h2 className="max-w-2xl font-display text-headline-lg-mobile text-on-band md:text-headline-lg text-balance">
             {data.title}
           </h2>
         ) : null}
@@ -30,7 +27,7 @@ export function WhoIsThisFor({ data }: { data: WhoIsThisForData | undefined }) {
             {points.map((point) => (
               <li key={point} className="flex items-start gap-3">
                 <CheckIcon />
-                <span className="font-sans text-body-lg text-inverse-on-surface/90">
+                <span className="font-sans text-body-lg text-on-band/90">
                   {point}
                 </span>
               </li>

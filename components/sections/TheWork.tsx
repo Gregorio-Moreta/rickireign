@@ -25,7 +25,7 @@ export function TheWork({ data }: { data: TheWorkData | undefined }) {
   const hasCards = Boolean(somatics?.name) || businesses.length > 0;
 
   return (
-    <Section id="work" aria-label={data.title ?? "The work"}>
+    <Section id="work" tone="alt" aria-label={data.title ?? "The work"}>
       <Container className="flex flex-col gap-stack">
         <header className="flex max-w-2xl flex-col gap-4">
           {data.title ? (
