@@ -1,13 +1,14 @@
 import type { StructureResolver } from "sanity/structure";
-import { CogIcon, HomeIcon } from "@sanity/icons";
+import { CogIcon, HomeIcon, SparkleIcon } from "@sanity/icons";
 
 // Singletons pinned to a fixed document id; collections listed below the divider.
 const SINGLETONS = [
   { id: "siteSettings", type: "siteSettings", title: "Site Settings", icon: CogIcon },
   { id: "homePage", type: "homePage", title: "Home Page", icon: HomeIcon },
+  { id: "somaticsPage", type: "somaticsPage", title: "Somatics Page", icon: SparkleIcon },
 ] as const;
 
-const COLLECTIONS = ["business", "post", "author"];
+const COLLECTIONS = ["business", "post", "author", "tag"];
 
 export const structure: StructureResolver = (S) =>
   S.list()

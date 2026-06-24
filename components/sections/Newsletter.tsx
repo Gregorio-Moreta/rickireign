@@ -11,11 +11,7 @@ export function Newsletter({ data }: { data: SimpleSection | undefined }) {
   if (!data) return null;
 
   return (
-    <Section
-      id="newsletter"
-      aria-label={data.title ?? "Join the list"}
-      className="bg-surface-container-low"
-    >
+    <Section id="newsletter" aria-label={data.title ?? "Join the list"}>
       <Container>
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
           {data.title ? (

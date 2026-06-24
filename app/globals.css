@@ -92,6 +92,12 @@
   --color-background: #fbf9f6;
   --color-on-background: #1b1c1a;
 
+  /* Grounding band — the "contrast" section tone (e.g. Who is this for?).
+     Dark in both themes: a striking inky band on the light page; a subtly
+     elevated dark panel on the dark page (overridden under .dark below). */
+  --color-band: #0e150f;
+  --color-on-band: #eceae6;
+
   /* Named brand neutrals + accents */
   --color-earth-charcoal: #070f08;
   --color-sand-stone: #e6e6e6;
@@ -223,6 +229,70 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* ------------------------------------------------------------------------
+   Dark theme. Brand-DERIVED (DESIGN.md only specifies a light palette) from
+   the brand's dark anchors — Earth-Charcoal surfaces, Sand-Stone/neutral text,
+   and the same Forest-Green + Teal accents. Flagged for Ricki's review.
+
+   Mechanism: the `dark` class is set on <html> (by an inline pre-paint script,
+   see app/layout.tsx, and the ThemeToggle). These plain (unlayered) rules
+   override the @theme tokens, so every token-driven component flips with no
+   per-component `dark:` classes.
+
+   Deliberately NOT overridden so they behave the same in both themes:
+   - inverse-surface / inverse-on-surface → the footer stays a dark band.
+   - primary-container / on-primary → filled buttons stay forest green + white.
+   - the *-fixed accent pairs → M3 "fixed" colors are theme-invariant by design.
+   ------------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* Surfaces — Earth-Charcoal base stepping up through lighter charcoal-greens */
+  --color-surface: #0d130e;
+  --color-surface-dim: #070f08;
+  --color-surface-bright: #2b332c;
+  --color-surface-container-lowest: #080d09;
+  --color-surface-container-low: #141b15;
+  --color-surface-container: #181f19;
+  --color-surface-container-high: #222a23;
+  --color-surface-container-highest: #2d352e;
+  --color-surface-variant: #424940;
+
+  /* Text — Sand-Stone / warm neutral light */
+  --color-on-surface: #e3e3df;
+  --color-on-surface-variant: #c2c8be;
+
+  --color-outline: #8c9388;
+  --color-outline-variant: #38423a;
+
+  /* Primary as a LIGHT green in dark — used for outline/secondary buttons,
+     nav hover, and accents. (Filled buttons use primary-container/on-primary,
+     which stay dark green + white, so they are left untouched.) */
+  --color-primary: #b6ccb9;
+
+  /* Secondary as a lighter teal so small text keeps AA contrast on dark. */
+  --color-secondary: #6fd4f2;
+
+  /* Grounding band — stays dark, just elevated above the page surface. */
+  --color-band: #20271f;
+  --color-on-band: #e3e3df;
+
+  --color-background: #0d130e;
+  --color-on-background: #e3e3df;
+}
+
+/* Smooth the light/dark switch (no flash on first load — the theme is applied
+   before paint; this only animates an explicit toggle). */
+body {
+  transition:
+    background-color 300ms ease,
+    color 300ms ease;
 }
 
 /* Respect reduced-motion globally: collapse non-essential animation/transition. */

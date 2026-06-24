@@ -39,8 +39,8 @@ yarn-error.log*
 # vercel
 .vercel
 
-# cloudflare / opennext
-/.open-next/
+# cloudflare / opennext (the * also catches Finder-style ".open-next 2" dupes)
+/.open-next*
 .wrangler/
 cloudflare-env.d.ts
 .dev.vars
@@ -50,9 +50,9 @@ cloudflare-env.d.ts
 *.tsbuildinfo
 next-env.d.ts
 
-# test artifacts (Playwright + Vitest)
-/playwright-report/
-/test-results/
+# test artifacts (Playwright + Vitest); * also catches Finder-style " 2" dupes
+/playwright-report*
+/test-results*
 /coverage/
 /.playwright/
 

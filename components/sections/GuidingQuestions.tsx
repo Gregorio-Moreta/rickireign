@@ -17,7 +17,7 @@ export function GuidingQuestions({
   if (items.length === 0) return null;
 
   return (
-    <Section aria-label="Guiding questions" className="bg-surface-container-low">
+    <Section aria-label="Guiding questions" tone="alt">
       <Container>
         <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
           {items.map((item, i) => (

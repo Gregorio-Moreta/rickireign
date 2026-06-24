@@ -1,78 +1,79 @@
-# Session State — post-ship (Phase 5 delivered; launch prep)
+# Session State — home reframe + launch hardening delivered (next: final production-readiness pass)
 
-_Transient doc. Reflects state as Phase 5 (Verify & ship) is delivered (2026-06-23). All six build phases (0–5) are complete. Durable facts/rules live in `CLAUDE.md`._
+_Transient handoff. Reflects branch `006-home-reframe` as of 2026-06-24. Durable rules/gotchas live in `CLAUDE.md`._
 
 ## Where we are
 
-**Phases 0–5 are complete.** Phase 5 (Verify & ship) is delivered on branch `005-verify-ship` (PR open, **not merged** — awaiting human sign-off; `main` is ready-on-merge).
+All six build phases (0–5) shipped earlier. This session delivered a large **post-launch reframe + hardening** pass on branch **`006-home-reframe`** (8 commits, 56 files, +6,149/−3,223). **Pushed, not yet PR'd/merged** (PR is the next step). lint + tsc clean; **both builds green** (Vercel `next build` + `opennextjs-cloudflare build`); Vitest 23/23; Playwright 36 pass / 3 gated (incl. new a11y + theme specs); workerd preview boots 200.
 
-- **Both prod targets were deployed from this branch and smoke-verified (2026-06-23):**
-  - Vercel: `https://rickireign.vercel.app` (aliased) — all routes 200, `/blog`→308→`/journal`, bad slug→404.
-  - Cloudflare: `https://rickireign.gregoriomoreta4.workers.dev` — same checks 200/308/404.
-  - Phase 5 changed **no app code** (test/config/docs only), so the deployed app bundle equals `main`'s.
-- **Full verification green** for head SHA `01c6102`: `lint` + `tsc` clean; Vitest **23/23**; Playwright **21 pass / 3 gated** on **both** server targets (`next start` :3000 and CF workerd preview :8787); live-forms **3/3** against **real Brevo**; `next build` + `opennextjs-cloudflare build` both succeed.
-- Branches kept (no-delete rule): `000-foundation`, `001-content-model`, `002-home`, `docs/phase-2-handoff`, `003-forms-and-legal`, `fix/phase-3-forms-legal`, `004-blog`, `005-verify-ship`, `main`.
+This branch was **not** a numbered build phase — it began as the home **narrative reframe** (driven by Ricki's 6/22 voice notes + chat, captured in `docs/planning/ricki-input/`) and grew to absorb most of the launch-prep carry-over.
 
-## What Phase 5 delivered (on `005-verify-ship`)
+## What `006-home-reframe` actually delivered
 
-**The test runner — none existed before.** Two layers:
+**1. Home narrative reframe** (`feat(home)` f358cf5) — the spine now *explains* rather than *converts*:
+- Hero identity → **leadership strategist** (not "founder/facilitator/somatic"); **all booking CTAs removed from home**; only a soft "Follow along" remains.
+- Merged **"The Practice" + "Founded & Led" → one "The Work"** section (`#work`): three arena cards — Exhale, CBV (external links) + **Somatics** (internal). About (`MeetReign`) **moved above** The Work.
+- New **`/somatics`** page — frames the practice as bio and is the **only** page with a booking CTA.
+- Nav + `siteSettings.nav`: `#practice`/`#founded` → `#work`. Retired `PracticeSection`/`FoundedAndLed`; new `components/sections/TheWork.tsx`. Schema: `homePage.theWork` + `somaticsPage` singleton; Studio redeployed.
 
-**Vitest unit (`tests/unit/`, node env, `fetch` mocked)** — server logic E2E can't prove deterministically:
-- `validation.test.ts` — email normalise/max, CRLF header-injection guard on name, message bounds, honeypot.
-- `rate-limit.test.ts` — under/at-limit, window reset, per-key isolation.
-- `brevo.test.ts` — `createDoiContact` DOI call shape + "already exists" benign-success path; `sendContactEmail` reply-to + HTML escaping; error → not-ok.
-- `turnstile.test.ts` — `verifyTurnstile` success/fail + fail-closed (missing secret, network error).
+**2. Imagery + polish** (c9cfd6c) — AI on-brand abstract card covers for all three arenas (via the entitled Sanity `generate_image`); strictly uniform fixed-height cards; expanded About bio (it had none).
 
-**Playwright E2E (`tests/e2e/`, chromium)** — critical flows, run against **both** deploy targets' local servers:
-- `journal.spec.ts` — list → detail (article OG) → tag filter → 404 (bad slug + bad tag) → `/blog` 308 redirect.
-- `nav.spec.ts` — SectionLink in-place scroll (clean URL), Journal route link, cross-route from `/privacy`, mobile menu.
-- `calendly.spec.ts` — Discovery Call CTA opens Calendly with the right scheduling URL (assets stubbed, no network).
-- `responsive.spec.ts` — 375/768/1024/1440, no horizontal overflow on `/` and `/journal`.
-- `console.spec.ts` — no console errors across `/`, `/privacy`, `/terms`, `/journal`, a post.
-- `forms.live.spec.ts` (**gated** by `RUN_LIVE_FORMS=1`) — **real Brevo**: newsletter DOI happy + invalid, contact submit.
-- `fixtures.ts` — shared base that pre-seeds the `rr-consent` cookie so the consent modal scrim doesn't intercept clicks.
+**3. Booking resilience** (c9cfd6c) — `BookingButton` is now a **real link** (progressive enhancement) with a **watchdog fallback**: if the Calendly popup doesn't mount in ~3.5s (ad/privacy blocker or hang) it opens the scheduling page (new tab, or same tab if popup-blocked). The discovery CTA is now `role=link` — E2E selector updated.
 
-**Tooling:** `playwright.config.ts` (configurable `webServer` + Turnstile test-key injection), `vitest.config.ts` (`@/*` alias), `package.json` scripts (`test`, `test:watch`, `test:e2e`, `test:e2e:cf`, `test:e2e:live`), artifact dirs ignored in `.gitignore` + `eslint.config.mjs`, and a `tests/**` ESLint override for the Playwright-`use`/React-hooks clash.
+**4. Site-wide dark mode + section separation** (`feat(theme)` d89252b):
+- Follow-system default + persisted toggle. Pre-paint inline script sets `.dark` on `<html>` (no flash); `ThemeToggle` (nav, desktop+mobile) via `useSyncExternalStore`; `lib/theme.ts`.
+- **Brand-DERIVED dark palette** under `.dark` in `globals.css` (DESIGN.md only specs light) — Earth-Charcoal surfaces, Sand-Stone text, same Forest/Teal accents. **Flagged for Ricki's review.**
+- `Section` gained a `tone` (base/alt/contrast) + a new `band` token (dark in both themes) → fixes the "sections blend" issue.
 
-## How to run the tests (the durable bit)
-```bash
-npm test               # Vitest unit (fast, no server, no secrets)
-npm run test:e2e       # Playwright vs `next start` :3000 (Vercel-equivalent bundle)
-npm run test:e2e:cf    # Playwright vs CF workerd preview :8787 (OpenNext target)
-npm run test:e2e:live  # gated real-Brevo form flows (sends real email; needs Brevo secrets + sends DOI)
-```
-- E2E boots the server with Cloudflare's **always-pass Turnstile TEST keys** (injected via `playwright.config.ts` `webServer.env` when `TURNSTILE_TEST_KEYS=1`) because the real site key is **domain-locked** — on localhost the live widget logs errors and never solves. `next start` gives `process.env` precedence over the local env file, so the test keys override while **real Brevo secrets** still load.
-- The default `test:e2e` run includes `forms.live.spec` but it **self-skips** unless `RUN_LIVE_FORMS=1`, so no email is sent and no secrets are needed for the green gate.
+**5. Accessibility** (2363a1f + b1ab848 + e89e021):
+- Visible **input borders** (was a 10%-opacity hairline); **"Follow along"** secondary button uses `primary` (was invisible-on-dark `primary-container`); **luminous-teal focus rings** (forest-green was invisible on dark).
+- `@axe-core/playwright` + `tests/e2e/a11y.spec.ts` — **0 WCAG 2.0/2.1 A/AA violations** across 5 pages × both themes.
+- Lighthouse-only fixes: legal "Last updated" contrast; "Visit site" label-in-name (WCAG 2.5.3); journal cards `h3`→`h2` (heading-order). **Lighthouse a11y = 100** on /, /somatics, /journal.
 
-## There is no Phase 6 — next is launch prep, not a build phase
-`docs/PLAN.md §7` ends at Phase 5. The site is feature-complete and live on both targets (dev/staging domains). The remaining work is **launch readiness**, all carry-over (see below). A future session would pick up those items or respond to new requests — **plan-first** as always.
+**6. CSP hardening** (b1ab848) — added `upgrade-insecure-requests` + `Cross-Origin-Opener-Policy: same-origin`. Documented why `script-src` keeps `'unsafe-inline'` (a nonce is incompatible with static/ISR caching + App Router inline hydration scripts).
 
-## Deploy env status
-- **Vercel:** prod + preview env set since Phase 3. Public keys (GA id, Turnstile site key, Calendly URL) default in `lib/env.ts`. No new env in Phases 4–5.
-- **Cloudflare:** runtime secrets (`BREVO_*`, `TURNSTILE_SECRET_KEY`) set via `wrangler secret put` (persist across `npm run deploy`). Public keys default in code.
+**7. Sentry — installed, DSN-gated, VERIFIED** (b1ab848 + cde286a):
+- `@sentry/nextjs` v10 + all config files per `docs/SENTRY.md`, privacy-tuned: **no PII, no Session Replay, no logs**; server `includeLocalVariables`; `tunnelRoute: "/monitoring"` (no CSP connect-src change). `app/global-error.tsx`, `instrumentation(.client/.server/.edge)`, `withSentryConfig` (env-driven org/project/token). Server/edge DSN **falls back to `NEXT_PUBLIC_SENTRY_DSN`** so one build var covers all on Cloudflare.
+- **Verified end-to-end**: a real server error reached Sentry Issues (RICKI-REIGN-1), then resolved; temporary `/sentry-example-page` + route created and **deleted** (never committed).
+- **Sentry project:** org `example-1wv`, project `ricki-reign`, DSN `https://03bea0b82197b6f523bbfc36d73506d1@o4511575656497152.ingest.us.sentry.io/4511621914361856` (public).
 
-## Gotchas specific to Phase 5 (don't re-learn)
-- **Consent modal blocks E2E clicks.** `ConsentBanner` renders a full-screen scrim (`layer-banner ... fixed inset-0`) on first visit (when `rr-consent` cookie is null), intercepting pointer events. The shared `tests/e2e/fixtures.ts` pre-seeds `rr-consent=denied` (domain-scoped, works for :3000 and :8787) so the modal never shows. Any new spec must `import { test } from "./fixtures"`, not `@playwright/test`.
-- **Real Turnstile site key is domain-locked** → unusable in headless localhost. Use the always-pass TEST keys for E2E (see run section above). The MCP/agent path and prod hosts use the real keys.
-- **`role="alert"` collides with Next's route announcer** (`#__next-route-announcer__`). Scope form-error assertions to the form (`form.getByRole("alert")`), not the page.
-- **Playwright `await use(...)` fixture param** trips `react-hooks/rules-of-hooks` (React 19 `use`). Disabled for `tests/**` in `eslint.config.mjs`.
-- **Don't run all specs per-viewport.** Responsive breakpoints are looped inside `responsive.spec.ts`; the form/live specs must run **once**, not once per viewport (would multiply real-email side-effects).
-- **`npm audit` highs are tooling-only** (`wrangler`/`miniflare`/`undici`, `sanity` CLI `ws`/`typeid-js`) — not in the deployed runtime, pre-existing, not from Phase 5. A non-breaking `npm audit fix` maintenance pass is deferred.
+**8. Sanity publish webhook** (e89e021) — `app/api/revalidate` verifies the Sanity HMAC signature (`@sanity/webhook`) then `revalidatePath("/", "layout")`. **Not yet active** (needs `SANITY_REVALIDATE_SECRET` on deploys + registering the webhook in sanity.io/manage). Note: Next 16 changed `revalidateTag` to `(tag, profile)`; we use `revalidatePath`.
 
-## Open questions / carry-over (still matter — restate each handoff until done)
-- **Brevo prod sender** — verify a `rickireign.com` domain sender (DOI + contact still send via a `brevosend.com` wrapper / the verified gmail).
-- **Lawyer review** of `/privacy` + `/terms` before public launch.
-- **Domain cutover** — Sanity/Studio + deploys point at `rickireign.vercel.app` (dev/staging); the apex still hosts the OLD site. Cut over when ready.
-- **Sanity revalidation webhook + draft/preview** — deferred; posts rely on 60s ISR (new posts appear within the window, not instantly).
-- **Real blog content + cover images** — the 2 seeded posts are placeholders; Ricki replaces/extends in the hosted Studio (`rickireign.sanity.studio`).
-- **Sanity AI image add-on** — Studio ✨ Generate is wired but **plan-gated** ("Project is not allowed to use this feature"); enable in sanity.io/manage → Plan, or build a free auto-cover pipeline. The MCP `generate_image` path IS entitled meanwhile.
-- **No-code tag management** — promote free-text tags to a reference `tag` doc type if Ricki wants to manage them in the Studio.
-- **contactEmail** — `welcome@rickireign.com` live/monitored; confirm canonical vs `hello@`.
-- **Calendly** — Discovery Call event is live; URL is the personal account (`gregorioe-moreta/discovery-call`) — swap if Ricki uses another.
-- **Dependency hygiene** — run a non-breaking `npm audit fix` pass for the tooling-only advisories.
+**9. Tags → reference doc type** (e89e021) — new `tag` document (title + URL-safe slug); `post.tags` is now references (no-code management). Migrated the 3 existing tags + both posts. Queries expand refs (`tags[]->{title, slug}`), `POSTS_BY_TAG_QUERY` matches `$tagSlug` (not reserved `$tag`); removed the string `TagInput`/`postTags`/`lib/tags`; sitemap adds `/somatics`. Schema + Studio redeployed.
 
-## If you're starting cold, know this
-- All six phases done; prod is live + tested on both targets; content is real and queryable via the Sanity MCP (`perspective: "published"`).
-- Run the test suites before any change that touches forms, nav, or the Journal (`npm test` + `npm run test:e2e`).
-- Schema changes need `cd studio && npm run schema:deploy` + `npx sanity deploy`; Studio runs at `:3333`.
-- Run the end-of-phase ritual with the **`/phase-handoff`** skill. Subagents can't do git/network writes — run git/`gh`/deploy from the main session. Never delete branches. See `CLAUDE.md` for the full rule set + Phase 0–5 gotchas.
+**10. Maintenance** — `npm audit fix` evaluated and **reverted** (no benefit; tooling-only transitive advisories, big lockfile churn). `.gitignore` broadened to `/.open-next*`, `/playwright-report*`, `/test-results*` after Finder-style " 2" duplicate dirs leaked a Brevo key into a commit (caught by GitHub push protection — nothing reached the remote).
+
+## Deploy-env status (set this session)
+
+- **Vercel** (project `rickireign`): added `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG=example-1wv`, `SENTRY_PROJECT=ricki-reign` (Production + `006-home-reframe` preview) via CLI; **user added `SENTRY_AUTH_TOKEN`** (Production + preview, `--sensitive`). Plus the existing Brevo/Turnstile/Calendly/GA/Sanity from Phase 3.
+- **Cloudflare** (Worker `rickireign`): **user added** all four Sentry vars as **Workers-Builds *build* vars** (DSN/org/project plaintext, `SENTRY_AUTH_TOKEN` as Secret). Plus the existing runtime secrets.
+- **`.env.local`**: **user added all 4 Sentry values**. ⚠️ This means **local dev now reports to Sentry** (DSN active). If dev noise is unwanted, comment out `NEXT_PUBLIC_SENTRY_DSN` in `.env.local` (the dormant-in-dev design); `SENTRY_ORG`/`PROJECT` are build-time only and harmless.
+
+## Next phase — final production-readiness pass (scope)
+
+1. **Open PR + merge `006-home-reframe` → main**, then **deploy both targets** and smoke-verify.
+2. **Verify Sentry in PROD**: deploy, trigger an error, confirm it appears in Issues, confirm **source maps upload** on build (auth token), confirm the **`/monitoring` tunnel** works under workerd.
+3. **Activate the Sanity publish webhook**: set `SANITY_REVALIDATE_SECRET` (Vercel + Cloudflare + `.env.local`) and register the webhook (sanity.io/manage → API → Webhooks → `https://<site>/api/revalidate`, same secret, trigger create/update/delete).
+4. **Domain cutover** — apex still serves the OLD site; deploys/Studio point at `*.vercel.app`.
+5. **Brevo `rickireign.com` domain sender** (DOI + contact still use the gmail wrapper).
+6. **Lawyer review** of `/privacy` + `/terms` — now also needs an **error-monitoring** line (Sentry) and confirm cookie language.
+7. **Ricki review**: final copy (hero/The Work/somatics drafts in Studio) + the **dark palette** (brand-derived, unreviewed) + the AI card images.
+8. **Optional**: a **performance** pass (Lighthouse perf 54–74 — the two Turnstile widgets are the main cost; consider lazy-loading them on interaction); **Session Replay** decision (off now).
+
+## Phase-specific gotchas (don't re-learn)
+
+- **Dark mode:** plain `.dark { --color-* }` (unlayered) overrides the `@theme` tokens, so the whole site flips with no per-component `dark:` classes. `inverse-surface`/`inverse-on-surface` are **deliberately NOT flipped** (footer stays a dark band). `primary` → light green in dark (so outline button + nav hover stay visible); filled `primary-container`/`on-primary` buttons + the `*-fixed` pairs are left theme-invariant. Anti-FOUC inline script in `<head>` + `suppressHydrationWarning` on `<html>`. `ThemeToggle` uses `useSyncExternalStore` (avoids React 19 set-state-in-effect lint).
+- **Sentry:** Turbopack `next build` AND OpenNext both build fine with v10; workerd boots with it present. Get the DSN via the Sentry MCP `find_dsns` (org `example-1wv`). The verify path: a temporary `/sentry-example-page` + `/api/sentry-example-api` (server `throw`) — delete after.
+- **Booking CTA is now `role=link`**, not button — any new test must use `getByRole("link", { name: /discovery call/i })`.
+- **Tags:** deterministic ids `tag-<slug>`; publish tag docs **before** repointing posts (reference order). `POSTS_BY_TAG_QUERY` param is `$tagSlug`.
+- **Commit messages with backticks get shell-mangled** by zsh → always `git commit -F <file>` for multi-line messages.
+- **Finder " 2" duplicate dirs** (`.open-next 2`, `playwright-report 2`, …) dodge anchored gitignore and can leak secrets — the globs now catch them; delete any you see.
+- **Lighthouse needs the prod build** (`next start`), not dev. Dev's HMR websocket means `waitUntil: "networkidle"` never settles — use `domcontentloaded` in headless checks.
+
+## Open questions / carry-over (restate until done)
+
+- Activate webhook + verify Sentry in prod (above). Domain cutover. Brevo domain sender. Lawyer review (+ error-monitoring line). Ricki's copy + dark-palette + AI-image review. Performance pass. Session Replay decision. Calendly is still the personal account (`gregorioe-moreta/discovery-call`).
+
+## If you're starting cold
+
+- All work is on `006-home-reframe` (pushed). Run `npm test` + `npm run test:e2e` before touching forms/nav/journal/theme. Schema changes need `cd studio && npm run schema:deploy` + `npx sanity deploy`. Never delete branches. Run git/gh/deploy from the main session. See `CLAUDE.md` for the full rule set + all phase gotchas.

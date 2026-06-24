@@ -69,59 +69,53 @@ export const homePage = defineType({
         }),
       ],
     }),
-    // 3. The Practice
+    // 3. The Work — merged section (replaces the old "The Practice" + "Founded
+    // & Led"). One leadership identity expressed across three arenas: the two
+    // businesses (Exhale, CBV — each links to its own site) and Somatics (links
+    // to the internal /somatics page). The page EXPLAINS; it does not sell, so
+    // there is intentionally no booking CTA here.
     defineField({
-      name: "practice",
+      name: "theWork",
+      title: "The Work",
       type: "object",
       options: { collapsible: true, collapsed: true },
       fields: [
         defineField({ name: "title", type: "string" }),
-        defineField({ name: "intro", type: "text", rows: 2 }),
         defineField({
-          name: "items",
-          type: "array",
-          of: [
-            defineArrayMember({
-              type: "object",
-              name: "practiceItem",
-              fields: [
-                defineField({
-                  name: "title",
-                  type: "string",
-                  validation: (rule) => rule.required(),
-                }),
-                defineField({ name: "description", type: "text", rows: 2 }),
-                defineField({
-                  name: "icon",
-                  type: "string",
-                  description: "Optional icon name",
-                }),
-              ],
-              preview: { select: { title: "title" } },
-            }),
-          ],
+          name: "intro",
+          type: "text",
+          rows: 3,
+          description:
+            "Frame the single identity (leadership strategist) → three arenas.",
         }),
-        defineField({ name: "ctaLabel", type: "string" }),
-        defineField({
-          name: "ctaTarget",
-          type: "string",
-          description: "URL or in-page anchor",
-        }),
-      ],
-    }),
-    // 4. Founded & Led
-    defineField({
-      name: "foundedAndLed",
-      type: "object",
-      options: { collapsible: true, collapsed: true },
-      fields: [
-        defineField({ name: "title", type: "string" }),
-        defineField({ name: "intro", type: "text", rows: 2 }),
         defineField({
           name: "businesses",
+          title: "Businesses (Exhale, Community Birth Village)",
           type: "array",
           of: [
             defineArrayMember({ type: "reference", to: [{ type: "business" }] }),
+          ],
+        }),
+        defineField({
+          name: "somaticsImage",
+          title: "Somatics card image",
+          type: "image",
+          options: { hotspot: true },
+        }),
+        defineField({
+          name: "somatics",
+          title: "Somatics card (links to /somatics)",
+          type: "object",
+          options: { collapsible: true, collapsed: false },
+          fields: [
+            defineField({ name: "name", type: "string", initialValue: "Somatics" }),
+            defineField({ name: "tagline", type: "string" }),
+            defineField({ name: "description", type: "text", rows: 2 }),
+            defineField({
+              name: "linkLabel",
+              type: "string",
+              initialValue: "Learn more",
+            }),
           ],
         }),
       ],

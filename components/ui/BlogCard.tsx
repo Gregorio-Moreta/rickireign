@@ -2,7 +2,6 @@ import Link from "next/link";
 import { SanityImage, hasImageAsset } from "@/components/ui/SanityImage";
 import { CoverFallback } from "@/components/ui/CoverFallback";
 import { formatDate } from "@/lib/date";
-import { slugifyTag } from "@/lib/tags";
 import { cn } from "@/lib/cn";
 import type { PostListItem } from "@/lib/sanity/types";
 
@@ -61,7 +60,7 @@ export function BlogCard({ post }: { post: PostListItem }) {
           </time>
         ) : null}
 
-        <h3 className="line-clamp-2 min-h-[2lh] font-display text-headline-md text-on-surface">
+        <h2 className="line-clamp-2 min-h-[2lh] font-display text-headline-md text-on-surface">
           {slug ? (
             <Link
               href={`/journal/${slug}`}
@@ -76,7 +75,7 @@ export function BlogCard({ post }: { post: PostListItem }) {
           ) : (
             title
           )}
-        </h3>
+        </h2>
 
         {excerpt ? (
           <p className="line-clamp-3 min-h-[3lh] font-sans text-body-md text-on-surface-variant text-pretty">
@@ -86,22 +85,24 @@ export function BlogCard({ post }: { post: PostListItem }) {
 
         {tags && tags.length > 0 ? (
           <ul className="relative z-10 mt-auto flex flex-wrap gap-2 pt-1">
-            {tags.map((tag) => (
-              <li key={tag}>
-                <Link
-                  href={`/journal/tag/${slugifyTag(tag)}`}
-                  className={cn(
-                    "inline-flex rounded-full bg-surface-container px-3 py-1",
-                    "font-sans text-label-md uppercase text-on-surface-variant",
-                    "transition-colors duration-200 hover:text-primary-container",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container",
-                    "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-                  )}
-                >
-                  {tag}
-                </Link>
-              </li>
-            ))}
+            {tags
+              .filter((tag) => tag.slug && tag.title)
+              .map((tag) => (
+                <li key={tag.slug}>
+                  <Link
+                    href={`/journal/tag/${tag.slug}`}
+                    className={cn(
+                      "inline-flex rounded-full bg-surface-container px-3 py-1",
+                      "font-sans text-label-md uppercase text-on-surface-variant",
+                      "transition-colors duration-200 hover:text-primary",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-luminous-teal",
+                      "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+                    )}
+                  >
+                    {tag.title}
+                  </Link>
+                </li>
+              ))}
           </ul>
         ) : null}
       </div>

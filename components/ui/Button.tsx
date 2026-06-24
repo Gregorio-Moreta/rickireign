@@ -36,7 +36,9 @@ const base = cn(
   "rounded transition-[background-color,color,box-shadow,transform] duration-200 ease-out",
   "cursor-pointer select-none",
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-  "focus-visible:ring-primary-container focus-visible:ring-offset-surface",
+  // Luminous-teal focus ring: a high-contrast indicator in BOTH themes
+  // (a forest-green ring is near-invisible on the dark surface).
+  "focus-visible:ring-luminous-teal focus-visible:ring-offset-surface",
   "disabled:pointer-events-none disabled:opacity-50",
   "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
 );
@@ -48,10 +50,11 @@ const variants: Record<Variant, string> = {
     "shadow-sm hover:-translate-y-0.5 hover:shadow-md",
     "active:translate-y-0",
   ),
-  // Outlined Forest Green; subtle fill on hover.
+  // Outlined; uses `primary` (dark green in light, light green in dark) so the
+  // outline + label stay clearly visible in BOTH themes. Subtle fill on hover.
   secondary: cn(
-    "border border-primary-container bg-transparent text-primary-container px-6 py-3",
-    "hover:bg-primary-container/8",
+    "border border-primary bg-transparent text-primary px-6 py-3",
+    "hover:bg-primary/10",
   ),
   // Teal text label (uses AA-safe --color-secondary for the small text) + chevron.
   // Luminous teal is reserved for the icon / hover only (non-text, 3:1 applies).

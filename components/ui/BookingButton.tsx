@@ -63,15 +63,46 @@ export function BookingButton({
   const url = publicEnv.calendlyUrl;
 
   const handleClick = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
+    (event: MouseEvent<HTMLAnchorElement>) => {
       if (!url) return;
+      // Let modifier/middle clicks use the native anchor (open in a new tab).
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) {
+        return;
+      }
       event.preventDefault();
+
+      let settled = false;
+
+      // Reliable fallback to the scheduling page: try a new tab, and if a popup
+      // blocker stops that, navigate the current tab instead (never blocked).
+      const goToCalendly = () => {
+        if (settled) return;
+        settled = true;
+        const opened = window.open(url, "_blank", "noopener,noreferrer");
+        if (!opened) window.location.href = url;
+      };
+
+      // If the popup overlay hasn't mounted a few seconds after the assets
+      // should have loaded, assume the widget was blocked (ad/privacy
+      // extension) or hung, and fall back so the visitor still reaches booking.
+      // The overlay container appears the moment initPopupWidget runs — even
+      // while the iframe loads — so a merely-slow Calendly won't trip this.
+      const watchdog = setTimeout(() => {
+        if (!settled && !document.querySelector(".calendly-overlay")) goToCalendly();
+      }, 3500);
+
       ensureCalendlyAssets()
-        .then(() => window.Calendly?.initPopupWidget({ url }))
-        .catch(() => {
-          // Asset load failed — fall back to the scheduling page directly.
-          window.open(url, "_blank", "noopener,noreferrer");
-        });
+        .then(() => {
+          if (settled) return;
+          if (window.Calendly) {
+            settled = true;
+            clearTimeout(watchdog);
+            window.Calendly.initPopupWidget({ url });
+          } else {
+            goToCalendly();
+          }
+        })
+        .catch(() => goToCalendly());
     },
     [url],
   );
@@ -84,8 +115,18 @@ export function BookingButton({
     );
   }
 
+  // Rendered as a real link to the scheduling page so it works even if our JS
+  // (or the Calendly widget) is blocked entirely — progressive enhancement. The
+  // click handler upgrades it to the in-page popup when the widget is available.
   return (
-    <Button variant={variant} className={className} onClick={handleClick}>
+    <Button
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      variant={variant}
+      className={className}
+      onClick={handleClick}
+    >
       {children}
     </Button>
   );

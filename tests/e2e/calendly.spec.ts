@@ -1,9 +1,10 @@
 import { test, expect } from "./fixtures";
 
 /**
- * The "Book a Discovery Call" CTA opens the Calendly scheduling popup. We stub
- * the Calendly widget assets (no external network) and assert the booking flow
- * fires with the right scheduling URL — i.e. the out-link resolves correctly.
+ * The "Book a Discovery Call" CTA opens the Calendly scheduling popup. Booking
+ * lives only on /somatics now (the home page deliberately has no booking CTA),
+ * so we exercise it there. We stub the Calendly widget assets (no external
+ * network) and assert the booking flow fires with the right scheduling URL.
  */
 test("Discovery Call CTA opens Calendly with the scheduling URL", async ({
   page,
@@ -19,9 +20,9 @@ test("Discovery Call CTA opens Calendly with the scheduling URL", async ({
     }),
   );
 
-  await page.goto("/");
+  await page.goto("/somatics");
 
-  const cta = page.getByRole("button", { name: /discovery call/i }).first();
+  const cta = page.getByRole("link", { name: /discovery call/i }).first();
   await expect(cta).toBeVisible();
   await cta.click();
 

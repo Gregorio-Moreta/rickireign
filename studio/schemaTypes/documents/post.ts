@@ -1,6 +1,5 @@
 import { defineType, defineField, defineArrayMember } from "sanity";
 import { DocumentTextIcon } from "@sanity/icons";
-import { TagInput } from "../../components/TagInput";
 
 // Blog post — Phase 4, modelled now so the content type exists.
 export const post = defineType({
@@ -84,10 +83,9 @@ export const post = defineType({
     defineField({
       name: "tags",
       type: "array",
-      of: [defineArrayMember({ type: "string" })],
-      // Custom input: free-type any tag + pick from the preset POST_TAGS list.
-      // Stores plain strings, so /journal/tag pages + queries are unchanged.
-      components: { input: TagInput },
+      // Managed tag documents (not free-text). Editors pick existing tags or
+      // create a new one inline; the URL slug lives on the tag doc.
+      of: [defineArrayMember({ type: "reference", to: [{ type: "tag" }] })],
     }),
     // Optional per-post SEO overrides. Left blank, the app derives metadata from
     // title / excerpt / coverImage (see app/blog/[slug]/page.tsx).

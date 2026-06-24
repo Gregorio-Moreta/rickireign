@@ -1,5 +1,6 @@
 import path from "node:path";
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * Content-Security-Policy. Active third parties:
@@ -17,6 +18,16 @@ import type { NextConfig } from "next";
  *
  * Still deferred (kept here as a reference — NOT active until their phase):
  *   Sanity API:           connect-src https://*.api.sanity.io https://*.apicdn.sanity.io
+ *
+ * On `script-src 'unsafe-inline'`: we deliberately keep it (rather than a nonce).
+ * A nonce-based CSP needs a fresh per-request nonce, but this site is mostly
+ * statically generated / ISR-cached (60s) and the App Router embeds inline
+ * hydration scripts (self.__next_f.push) plus our pre-paint theme script into
+ * that cached HTML. A per-request nonce would mismatch the cached document and
+ * BREAK every script. Hash-based CSP is likewise impractical (Next's inline
+ * bootstrap varies per build/route). So inline scripts stay allowed; the rest
+ * of the policy is tightly scoped (default 'self', no object-src, base-uri/
+ * form-action 'self', frame-ancestors 'none', upgrade-insecure-requests).
  */
 const cspDirectives = [
   "default-src 'self'",
@@ -30,6 +41,8 @@ const cspDirectives = [
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
+  // Upgrade any stray http subresource to https (everything is already https).
+  "upgrade-insecure-requests",
 ].join("; ");
 
 const securityHeaders = [
@@ -48,6 +61,11 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
+  // Isolate our browsing context (mitigates cross-origin leak/Spectre-class
+  // attacks). `same-origin` is safe here: the only window we open is the
+  // Calendly fallback tab, which we open with noopener anyway, and it does not
+  // affect the Turnstile/Calendly iframes (governed by frame-src).
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
 ];
 
 const nextConfig: NextConfig = {
@@ -79,7 +97,22 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * Wrap with Sentry. Dormant until env is set:
+ *   - org/project/authToken come from env (build-time secret for source maps);
+ *     with no authToken, source-map upload is simply skipped.
+ *   - tunnelRoute proxies events through our own domain (/monitoring), so we
+ *     don't add Sentry hosts to the CSP connect-src and ad-blockers don't drop
+ *     events. The consent/headers config must keep /monitoring un-gated.
+ */
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+  silent: !process.env.CI,
+});
 
 // Wire Cloudflare bindings into the local `next dev` server ONLY.
 // Guard on NODE_ENV so this never runs during `next build`: the adapter's own

@@ -5,6 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Analytics } from "@/components/analytics/Analytics";
 import { ConsentBanner } from "@/components/analytics/ConsentBanner";
 import { cn } from "@/lib/cn";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { sanityFetch } from "@/lib/sanity/fetch";
 import { SITE_SETTINGS_QUERY } from "@/lib/sanity/queries";
 import type { SiteSettings } from "@/lib/sanity/types";
@@ -38,8 +39,13 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(caslon.variable, hanken.variable, "h-full")}
     >
+      <head>
+        {/* Apply the saved/OS theme before first paint to avoid a flash. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
         {/* Skip link — first focusable element for keyboard users. */}
         <a

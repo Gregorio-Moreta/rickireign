@@ -21,7 +21,7 @@ export function Connect({
   if (!data) return null;
 
   return (
-    <Section id="connect" aria-label={data.title ?? "Connect"}>
+    <Section id="connect" tone="alt" aria-label={data.title ?? "Connect"}>
       <Container>
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 text-center">
           {data.title ? (
