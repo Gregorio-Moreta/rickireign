@@ -138,6 +138,12 @@ export interface Author {
   bio?: string;
 }
 
+/** A managed tag (reference doc), expanded to display title + URL slug. */
+export interface Tag {
+  title?: string;
+  slug?: string;
+}
+
 /** Card-sized post shape (blog index + tag pages). */
 export interface PostListItem {
   _id: string;
@@ -146,7 +152,7 @@ export interface PostListItem {
   excerpt?: string;
   coverImage?: SanityImage;
   publishedAt?: string;
-  tags?: string[];
+  tags?: Tag[];
   author?: Pick<Author, "name" | "image">;
 }
 

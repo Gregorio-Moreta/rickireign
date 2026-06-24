@@ -47,6 +47,9 @@ export const BUSINESSES_QUERY = defineQuery(`*[_type == "business"] | order(orde
   _id, name, tagline, description, image, externalUrl, order
 }`);
 
+/** Tag reference, expanded to its display title + URL slug. */
+const TAG_PROJECTION = `tags[]->{ "title": title, "slug": slug.current }`;
+
 /** Card-sized fields shared by the blog list + tag pages. */
 const POST_CARD_PROJECTION = `
   _id,
@@ -55,7 +58,7 @@ const POST_CARD_PROJECTION = `
   excerpt,
   coverImage,
   publishedAt,
-  tags,
+  ${TAG_PROJECTION},
   author->{ name, image }
 `;
 
@@ -72,7 +75,7 @@ export const POST_QUERY = defineQuery(`*[_type == "post" && slug.current == $slu
   coverImage,
   body,
   publishedAt,
-  tags,
+  ${TAG_PROJECTION},
   author->{ name, image, bio },
   seo
 }`);
@@ -82,10 +85,16 @@ export const POST_SLUGS_QUERY = defineQuery(`*[_type == "post" && defined(slug.c
   "slug": slug.current
 }`);
 
-/** Published posts carrying a given tag (exact display string), newest first.
- *  Param is `tagName`, not `tag` — `tag` is a reserved key in QueryParams. */
-export const POSTS_BY_TAG_QUERY = defineQuery(`*[_type == "post" && defined(slug.current) && $tagName in tags]
+/** Published posts referencing a tag with the given slug, newest first.
+ *  Param is `tagSlug`, not `tag` — `tag` is a reserved key in QueryParams. */
+export const POSTS_BY_TAG_QUERY = defineQuery(`*[_type == "post" && defined(slug.current) && $tagSlug in tags[]->slug.current]
   | order(publishedAt desc){${POST_CARD_PROJECTION}}`);
 
-/** Distinct tags across all published posts (for tag-page static params). */
-export const TAGS_QUERY = defineQuery(`array::unique(*[_type == "post" && defined(slug.current)].tags[])`);
+/** All tags, for tag-page static params + slug→title resolution. */
+export const TAGS_QUERY = defineQuery(`*[_type == "tag" && defined(slug.current)]
+  | order(title asc){ "title": title, "slug": slug.current }`);
+
+/** A single tag by slug (for the tag page title/metadata). */
+export const TAG_BY_SLUG_QUERY = defineQuery(`*[_type == "tag" && slug.current == $tagSlug][0]{
+  "title": title, "slug": slug.current
+}`);

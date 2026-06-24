@@ -11,7 +11,6 @@ import { SanityImage, hasImageAsset } from "@/components/ui/SanityImage";
 import { CoverFallback } from "@/components/ui/CoverFallback";
 import { PostBody } from "@/components/blog/PostBody";
 import { formatDate } from "@/lib/date";
-import { slugifyTag } from "@/lib/tags";
 import { cn } from "@/lib/cn";
 
 type Params = { slug: string };
@@ -126,21 +125,23 @@ export default async function PostPage({
 
           {tags && tags.length > 0 ? (
             <footer className="mt-4 flex flex-wrap gap-2 border-t border-outline-variant/60 pt-6">
-              {tags.map((tag) => (
-                <Link
-                  key={tag}
-                  href={`/journal/tag/${slugifyTag(tag)}`}
-                  className={cn(
-                    "inline-flex rounded-full bg-surface-container px-3 py-1",
-                    "font-sans text-label-md uppercase text-on-surface-variant",
-                    "transition-colors duration-200 hover:text-primary-container",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container",
-                    "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
-                  )}
-                >
-                  {tag}
-                </Link>
-              ))}
+              {tags
+                .filter((tag) => tag.slug && tag.title)
+                .map((tag) => (
+                  <Link
+                    key={tag.slug}
+                    href={`/journal/tag/${tag.slug}`}
+                    className={cn(
+                      "inline-flex rounded-full bg-surface-container px-3 py-1",
+                      "font-sans text-label-md uppercase text-on-surface-variant",
+                      "transition-colors duration-200 hover:text-primary",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-luminous-teal",
+                      "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
+                    )}
+                  >
+                    {tag.title}
+                  </Link>
+                ))}
             </footer>
           ) : null}
         </article>

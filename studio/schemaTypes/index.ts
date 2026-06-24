@@ -6,6 +6,7 @@ import { somaticsPage } from "./documents/somaticsPage";
 import { business } from "./documents/business";
 import { author } from "./documents/author";
 import { post } from "./documents/post";
+import { tag } from "./documents/tag";
 
 export const schemaTypes = [
   // Reusable objects
@@ -18,4 +19,5 @@ export const schemaTypes = [
   business,
   author,
   post,
+  tag,
 ];

@@ -112,7 +112,9 @@ function ArenaCard({
             variant="tertiary"
             target={external ? "_blank" : undefined}
             aria-label={
-              external ? `Visit ${name} (opens in a new tab)` : `${linkLabel}: ${name}`
+              external
+                ? `${linkLabel}: ${name} (opens in a new tab)`
+                : `${linkLabel}: ${name}`
             }
           >
             {linkLabel}

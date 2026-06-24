@@ -8,7 +8,7 @@ const SINGLETONS = [
   { id: "somaticsPage", type: "somaticsPage", title: "Somatics Page", icon: SparkleIcon },
 ] as const;
 
-const COLLECTIONS = ["business", "post", "author"];
+const COLLECTIONS = ["business", "post", "author", "tag"];
 
 export const structure: StructureResolver = (S) =>
   S.list()

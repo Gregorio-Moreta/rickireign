@@ -2,9 +2,11 @@ import type { QueryParams } from "next-sanity";
 import { client } from "./client";
 
 /**
- * Time-based ISR window for published content. A signature-verified Sanity
- * revalidation webhook (publish-triggered) is deferred to a later phase; until
- * then content refreshes at most once per minute.
+ * Time-based ISR window for published content — the safety net. A
+ * signature-verified Sanity publish webhook (see app/api/revalidate) also
+ * revalidates on demand (revalidatePath), so edits go live within seconds once
+ * the webhook is registered; absent the webhook, content still refreshes at
+ * most once per minute.
  */
 export const REVALIDATE_SECONDS = 60;
 
