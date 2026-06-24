@@ -50,6 +50,12 @@ cloudflare-env.d.ts
 *.tsbuildinfo
 next-env.d.ts
 
+# test artifacts (Playwright + Vitest)
+/playwright-report/
+/test-results/
+/coverage/
+/.playwright/
+
 # OS / editor cruft
 Thumbs.db
 .idea/

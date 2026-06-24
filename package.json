@@ -10,7 +10,12 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "TURNSTILE_TEST_KEYS=1 playwright test",
+    "test:e2e:cf": "E2E_BASE_URL=http://localhost:8787 E2E_WEB_COMMAND='npm run preview' TURNSTILE_TEST_KEYS=1 playwright test",
+    "test:e2e:live": "RUN_LIVE_FORMS=1 TURNSTILE_TEST_KEYS=1 playwright test forms.live"
   },
   "dependencies": {
     "@next/third-parties": "^16.2.9",
@@ -25,6 +30,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -33,6 +39,7 @@
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vitest": "^4.1.9",
     "wrangler": "^4.101.0"
   }
 }

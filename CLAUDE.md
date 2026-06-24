@@ -34,6 +34,10 @@ A calm, premium marketing site establishing **Ricki Reign** as a founder, facili
 npm run dev                       # dev server :3000
 npm run build                     # next build (Turbopack) — the Vercel build
 npm run lint && npx tsc --noEmit  # must be clean before commit
+npm test                          # Vitest unit (lib/*; fast, no server, no secrets)
+npm run test:e2e                  # Playwright E2E vs `next start` :3000 (Vercel-equivalent)
+npm run test:e2e:cf               # Playwright E2E vs CF workerd preview :8787 (OpenNext)
+npm run test:e2e:live             # gated real-Brevo form flows (RUN_LIVE_FORMS; SENDS real email)
 npm run deploy                    # opennextjs-cloudflare build && deploy (also the CF dashboard deploy cmd)
 npm run preview                   # build + run the Worker locally (workerd)
 npx opennextjs-cloudflare build   # produce .open-next/worker.js only
@@ -78,7 +82,7 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **Cloudflare:** Worker `rickireign` (prod `https://rickireign.gregoriomoreta4.workers.dev`). Dashboard deploy command = `npm run deploy`.
 
 ## Build phases (docs/PLAN.md §7)
-0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (PR #4) · 3 Forms & legal ✓ (PR #5 + fix-round PR #6, both merged) · 4 Blog ✓ (branch `004-blog`, PR open, not merged) · **5 Verify & ship**.
+0 Foundation ✓ · 1 Content model ✓ · 2 Home ✓ (PR #4) · 3 Forms & legal ✓ (PR #5 + fix-round PR #6) · 4 Blog ✓ (PR #7, merged) · **5 Verify & ship ✓ (branch `005-verify-ship`, PR open, not merged; deployed to both prod targets + smoke-verified).** All six phases complete — next is **launch prep** (carry-over below), not a build phase.
 
 ## Phase 3 facts (Forms & legal — don't re-learn)
 - **Brevo:** account `gregorioe.moreta@gmail.com`. Newsletter list id `3` ("Newsletter — rickireign.com"); DOI template id `1` (tagged `optin`, confirm button → `{{ doubleoptin }}` — required for forms hosted OUTSIDE Brevo). Transactional sender = `BREVO_SENDER_EMAIL` (currently the verified gmail; verify a `rickireign.com` domain sender for prod). Server secrets read straight from `process.env` in `lib/{brevo,turnstile}.ts` (imported only by `app/api/{newsletter,contact}/route.ts`), never `lib/env.ts`.
@@ -112,6 +116,19 @@ gh pr create --base main --head <branch>   # PRs from the main session
 - **One-click AI covers in the Studio:** `@sanity/assist` is installed + `assist()` is in `studio/sanity.config.ts`; `post.coverImage` has an `instruction` prompt subfield + `options.aiAssist.imageInstructionField` (pre-filled with the brand art direction). Editors click **✨ Generate** on the cover to get on-brand art — runs through the authenticated Studio session, **no app/site write token** (token-less site preserved). AI Assist is an **experimental** Sanity feature. `CoverFallback` remains the silent safety net if a post still has no image.
   - **GOTCHA / blocked:** the in-Studio Generate currently errors **"Project is not allowed to use this feature"** — AI **image** generation is gated by the Sanity **plan/add-on** (enable in sanity.io/manage → Plan). The button + wiring are left in place (user chose "decide later") and will work once enabled. The **agent/MCP `generate_image` path IS entitled** for this project (it made the 2 seeded covers) — use that to generate covers on request meanwhile.
 - **Tags: free-type + preset picker.** Custom `studio/components/TagInput.tsx` (wired via `components: { input }` on `post.tags`) lets editors free-type any tag AND pick from the preset `POST_TAGS` (`studio/schemaTypes/postTags.ts`) shown as a datalist + one-click chips. **Stores plain strings**, so `/journal/tag` queries/types are unchanged. (Native `options.list` only renders checkboxes — no free-type; `sanity-plugin-tags` stores objects — would ripple into queries. Hence the custom input.) Add a preset by appending `POST_TAGS` + redeploy. No-code editor-managed tags (reference `tag` doc type) deferred.
+
+## Phase 5 facts (Verify & ship — don't re-learn)
+- **Two test layers, both green.** **Vitest** (`tests/unit/`, node, `fetch` mocked) covers `lib/{validation,brevo,rate-limit,turnstile}` — the server logic E2E can't prove deterministically (DOI call shape, honeypot, CRLF guard, rate-limit windows, Turnstile fail-closed). **Playwright** (`tests/e2e/`, chromium) covers the flows against **both** deploy targets' local servers (`test:e2e` → `next start`; `test:e2e:cf` → CF workerd preview): Journal list→detail→tag→404, `/blog` 308, in-page nav, Calendly out-link, responsive, no console errors.
+- **Consent modal blocks E2E clicks.** `ConsentBanner` renders a full-screen scrim on first visit (cookie `rr-consent` null). The shared **`tests/e2e/fixtures.ts`** pre-seeds `rr-consent=denied` (domain-scoped → works on :3000 and :8787). **New specs must `import { test } from "./fixtures"`, not `@playwright/test`.**
+- **Turnstile in E2E:** the real site key is **domain-locked** (unusable headless on localhost — the widget logs errors and never solves). E2E injects Cloudflare's **always-pass TEST keys** via `playwright.config.ts` `webServer.env` when `TURNSTILE_TEST_KEYS=1`. `next start` gives `process.env` precedence over the local env file, so the test keys override the public site key while **real Brevo secrets still load** → live forms hit real Brevo.
+- **Live form tests are gated** behind `RUN_LIVE_FORMS=1` (`test:e2e:live`) because the happy paths **send real email** (DOI + transactional). The default `test:e2e` includes the spec but it self-skips → green gate sends nothing.
+- **`role="alert"` collides with Next's route announcer** — scope form-error assertions to the form (`form.getByRole("alert")`).
+- **Playwright `await use(...)` fixture param** trips `react-hooks/rules-of-hooks` (React 19 `use`); disabled for `tests/**` in `eslint.config.mjs`. **Don't run every spec per-viewport** — responsive loops viewports inside one spec so live/form specs run once (not 4× real emails).
+- **`npm audit` highs are tooling-only** (`wrangler`/`miniflare`/`undici`, `sanity` CLI `ws`/`typeid-js`) — not in the deployed runtime, pre-existing. A non-breaking `npm audit fix` pass is deferred (carry-over).
+- **Phase 5 added no app code, no new env, no CSP origin** — test/config/docs only. Both prod targets were deployed from `005-verify-ship` and smoke-verified (routes 200, `/blog`→308→`/journal`, bad slug→404).
+
+## Launch-prep carry-over (restate until done)
+Verify a `rickireign.com` Brevo **domain sender**; **lawyer review** of `/privacy`+`/terms`; **domain cutover** (apex still hosts the old site); Sanity **publish webhook** (posts rely on 60s ISR); enable the Sanity **AI image add-on** (Studio ✨ Generate is plan-gated) or build a free auto-cover pipeline; promote tags to a **reference doc type** for no-code management; **`npm audit fix`** for the tooling-only advisories.
 
 ## Don't
 Don't add Supabase (this is Sanity). Don't invent brand values (DESIGN.md). Don't embed the Studio. Don't expand scope past the approved plan without checking in. Don't reach for a dependency the stack already covers.

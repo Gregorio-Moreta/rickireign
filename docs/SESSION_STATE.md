@@ -1,87 +1,78 @@
-# Session State — handoff into Phase 5 (Verify & ship)
+# Session State — post-ship (Phase 5 delivered; launch prep)
 
-_Transient doc. Reflects state as Phase 4 (Blog / "Journal") is delivered (2026-06-23). When Phase 5 ships, rewrite this. Durable facts/rules live in `CLAUDE.md`._
+_Transient doc. Reflects state as Phase 5 (Verify & ship) is delivered (2026-06-23). All six build phases (0–5) are complete. Durable facts/rules live in `CLAUDE.md`._
 
 ## Where we are
 
-**Phases 0–4 are complete.**
-- Phases 0–3 are **merged to `main`** (Phase 3 + its fix/hardening round via PR #5 and PR #6).
-- **Phase 4 (Blog) is delivered on branch `004-blog`** via a feature PR (this handoff bundled in). **Not merged yet — awaiting human sign-off.** `main` is Phase-5-ready the moment it merges.
-- **Both builds pass locally** for head SHA `11d68c2` (`npm run build` + `npx opennextjs-cloudflare build`); lint + tsc clean. CI (Vercel deploy + Cloudflare Workers Build) was triggered on push — **confirm both green for `11d68c2` before merge** (visible on the PR).
-- Branches kept (no-delete rule): `000-foundation`, `001-content-model`, `002-home`, `docs/phase-2-handoff`, `003-forms-and-legal`, `fix/phase-3-forms-legal`, `004-blog`, `main`.
+**Phases 0–5 are complete.** Phase 5 (Verify & ship) is delivered on branch `005-verify-ship` (PR open, **not merged** — awaiting human sign-off; `main` is ready-on-merge).
 
-### First steps in Phase 5
+- **Both prod targets were deployed from this branch and smoke-verified (2026-06-23):**
+  - Vercel: `https://rickireign.vercel.app` (aliased) — all routes 200, `/blog`→308→`/journal`, bad slug→404.
+  - Cloudflare: `https://rickireign.gregoriomoreta4.workers.dev` — same checks 200/308/404.
+  - Phase 5 changed **no app code** (test/config/docs only), so the deployed app bundle equals `main`'s.
+- **Full verification green** for head SHA `01c6102`: `lint` + `tsc` clean; Vitest **23/23**; Playwright **21 pass / 3 gated** on **both** server targets (`next start` :3000 and CF workerd preview :8787); live-forms **3/3** against **real Brevo**; `next build` + `opennextjs-cloudflare build` both succeed.
+- Branches kept (no-delete rule): `000-foundation`, `001-content-model`, `002-home`, `docs/phase-2-handoff`, `003-forms-and-legal`, `fix/phase-3-forms-legal`, `004-blog`, `005-verify-ship`, `main`.
+
+## What Phase 5 delivered (on `005-verify-ship`)
+
+**The test runner — none existed before.** Two layers:
+
+**Vitest unit (`tests/unit/`, node env, `fetch` mocked)** — server logic E2E can't prove deterministically:
+- `validation.test.ts` — email normalise/max, CRLF header-injection guard on name, message bounds, honeypot.
+- `rate-limit.test.ts` — under/at-limit, window reset, per-key isolation.
+- `brevo.test.ts` — `createDoiContact` DOI call shape + "already exists" benign-success path; `sendContactEmail` reply-to + HTML escaping; error → not-ok.
+- `turnstile.test.ts` — `verifyTurnstile` success/fail + fail-closed (missing secret, network error).
+
+**Playwright E2E (`tests/e2e/`, chromium)** — critical flows, run against **both** deploy targets' local servers:
+- `journal.spec.ts` — list → detail (article OG) → tag filter → 404 (bad slug + bad tag) → `/blog` 308 redirect.
+- `nav.spec.ts` — SectionLink in-place scroll (clean URL), Journal route link, cross-route from `/privacy`, mobile menu.
+- `calendly.spec.ts` — Discovery Call CTA opens Calendly with the right scheduling URL (assets stubbed, no network).
+- `responsive.spec.ts` — 375/768/1024/1440, no horizontal overflow on `/` and `/journal`.
+- `console.spec.ts` — no console errors across `/`, `/privacy`, `/terms`, `/journal`, a post.
+- `forms.live.spec.ts` (**gated** by `RUN_LIVE_FORMS=1`) — **real Brevo**: newsletter DOI happy + invalid, contact submit.
+- `fixtures.ts` — shared base that pre-seeds the `rr-consent` cookie so the consent modal scrim doesn't intercept clicks.
+
+**Tooling:** `playwright.config.ts` (configurable `webServer` + Turnstile test-key injection), `vitest.config.ts` (`@/*` alias), `package.json` scripts (`test`, `test:watch`, `test:e2e`, `test:e2e:cf`, `test:e2e:live`), artifact dirs ignored in `.gitignore` + `eslint.config.mjs`, and a `tests/**` ESLint override for the Playwright-`use`/React-hooks clash.
+
+## How to run the tests (the durable bit)
 ```bash
-git checkout main && git pull origin main      # after the 004-blog PR merges
-git checkout -b 005-verify-ship
-git push -u origin 005-verify-ship
+npm test               # Vitest unit (fast, no server, no secrets)
+npm run test:e2e       # Playwright vs `next start` :3000 (Vercel-equivalent bundle)
+npm run test:e2e:cf    # Playwright vs CF workerd preview :8787 (OpenNext target)
+npm run test:e2e:live  # gated real-Brevo form flows (sends real email; needs Brevo secrets + sends DOI)
 ```
+- E2E boots the server with Cloudflare's **always-pass Turnstile TEST keys** (injected via `playwright.config.ts` `webServer.env` when `TURNSTILE_TEST_KEYS=1`) because the real site key is **domain-locked** — on localhost the live widget logs errors and never solves. `next start` gives `process.env` precedence over the local env file, so the test keys override while **real Brevo secrets** still load.
+- The default `test:e2e` run includes `forms.live.spec` but it **self-skips** unless `RUN_LIVE_FORMS=1`, so no email is sent and no secrets are needed for the green gate.
 
-## What Phase 4 delivered (on `004-blog`)
-
-**Routes (all Server Components, App Router; 60s ISR via existing `sanityFetch`). Route is `/journal` — `/blog/*` 308-redirects (`next.config.ts`):**
-- `app/journal/page.tsx` — Journal index. All published posts `order(publishedAt desc)`, `PostGrid` of `BlogCard`s, graceful empty state, static metadata.
-- `app/journal/[slug]/page.tsx` — post detail. `generateStaticParams` (pre-renders known slugs), `generateMetadata` (per-post SEO, article OG), `notFound()` on unknown slug. Cover (or `CoverFallback`), title, date·author meta, tags footer, Portable Text body.
-- `app/journal/tag/[tag]/page.tsx` — indexable tag-filtered list. Static params from distinct tags; per-tag metadata; `notFound()` for unknown tag.
-- `app/sitemap.ts` + `app/robots.ts` — static routes + every post + every tag page; robots allow-all → sitemap.
-- (Component dir stays `components/blog/` — internal name, not a URL.)
-
-**Components / libs:**
-- `components/ui/BlogCard.tsx` — whole-card link (title `after:absolute` overlay) + independently-clickable tag links; cover degrades gracefully to a text-only card when no asset.
-- `components/blog/PostGrid.tsx`, `components/blog/PostBody.tsx` — `PostBody` is a richer Portable Text map than `MeetReign` (h2/h3, normal, blockquote, bullet/number lists, strong/em/link marks with external `target=_blank rel=noopener`, inline images sized from the asset ref).
-- `lib/date.ts` (`formatDate`, UTC `Intl.DateTimeFormat`), `lib/tags.ts` (`slugifyTag` + `resolveTagSlug` — tags are free-text, slugified for URLs and resolved back for the GROQ query).
-
-**Data + schema:**
-- `lib/sanity/queries.ts`: `POSTS_QUERY`, `POST_QUERY`, `POST_SLUGS_QUERY`, `POSTS_BY_TAG_QUERY` (param **`tagName`**, not `tag` — see gotcha), `TAGS_QUERY` (`array::unique`).
-- `lib/sanity/types.ts`: `Author`, `PostListItem`, `Post`.
-- `studio/schemaTypes/documents/post.ts`: added optional **`seo`** object (Option B). **Schema deployed** (`npm run schema:deploy`) + Studio build validated.
-
-**Nav:** added a top-level **"Journal"** link (real route → `next/link`) to `Nav` (desktop + mobile) and `Footer`, alongside the Sanity-driven in-page section links.
-
-**Card uniformity + covers (post-review fix):** `BlogCard` clamps title (2 lines) + excerpt (3 lines) via `min-h-[Nlh]`, pins tags to a shared bottom, and **always renders a 3:2 cover**; imageless posts get `components/ui/CoverFallback.tsx` (branded gradient + dotted texture + wordmark). **The detail page renders `CoverFallback` too** when no cover. The 2 seeded posts got **on-brand AI cover images** via the Sanity `generate_image` MCP (somatic dune forms; woven roots/fibers). **Slugs enforced URL-safe** (`post.slug` custom `slugify` + regex validation) — a space in a slug 404s the detail route.
-
-**Hosted Studio DEPLOYED:** **https://rickireign.sanity.studio** (`studioHost` + `deployment.appId` in `studio/sanity.cli.ts`) — the **no-code editor for Ricki**. Add/edit/remove posts in the browser; live within 60s ISR. Add/remove round-trip verified end-to-end. Same `production` dataset as the site.
-
-**One-click AI covers:** `@sanity/assist` enabled in the Studio; `post.coverImage` has a pre-filled brand prompt + `aiAssist.imageInstructionField`. Editors click ✨ Generate for on-brand art — runs in the authenticated Studio session, no app write token (site stays token-less). Experimental; `CoverFallback` is the safety net. **BLOCKED:** the Studio Generate button errors "Project is not allowed to use this feature" — AI image gen is a Sanity **plan/add-on** entitlement (enable in sanity.io/manage → Plan). Left in place per user ("decide later"); works once enabled. The **MCP `generate_image` path is entitled** and made the 2 seeded covers — use it to generate covers on request meanwhile.
-
-**Tags — free-type + preset picker:** custom `studio/components/TagInput.tsx` (wired on `post.tags`) lets editors free-type any tag AND pick from preset `POST_TAGS` (`studio/schemaTypes/postTags.ts`: Essay, Note, Somatic Leadership, Ancestral Wisdom, Organizational Leadership, Practice, Community, Ritual & Rest) via datalist + one-click chips. **Stores plain strings** so `/journal/tag` queries/types are unchanged (native `options.list` = checkboxes only, no free-type; `sanity-plugin-tags` stores objects → would ripple). Add a preset by appending the list + redeploying. No-code editor-managed tags (reference `tag` doc type) deferred.
-
-**Seeded content (Sanity MCP, published):** `author` **Ricki Reign** (`_id author-ricki-reign`) + 2 posts — `leading-from-the-body` (tags: Somatic Leadership, Essay) and `ancestral-remembering` (tags: Ancestral Wisdom, Essay). Author published before posts (reference order). On-brand placeholders, replaceable in the Studio.
-
-**Runtime-verified locally (dev server + curl):** `/journal` lists posts; detail `<title>` + `og:type=article` + body + cover/fallback render; `/journal/tag/essay` filters; `/blog/*` 308-redirects to `/journal/*`; bad slug + bad tag → 404; sitemap includes post + tag URLs; robots correct.
-
-## Design spec
-
-`docs/superpowers/specs/2026-06-23-phase-4-blog-design.md` — the approved Phase 4 design + the content decisions (one flexible `post` schema, Journal label, indexable tag pages, Option B SEO).
-
-## Phase 5 — Verify & ship (the goal)
-
-Per PLAN.md §7: Playwright flows (newsletter happy + invalid + DOI, contact submit, out-links resolve, nav, **blog: list → detail → tag → 404**, responsive, no console errors) → `/ship-check` → Vercel + Cloudflare prod deploy. This is where the **test runner finally lands** (none today — see open items).
+## There is no Phase 6 — next is launch prep, not a build phase
+`docs/PLAN.md §7` ends at Phase 5. The site is feature-complete and live on both targets (dev/staging domains). The remaining work is **launch readiness**, all carry-over (see below). A future session would pick up those items or respond to new requests — **plan-first** as always.
 
 ## Deploy env status
-- **Vercel:** Phase 3 env set for production + the `003-forms-and-legal` preview branch. Public keys (GA id, Turnstile site key, Calendly URL) default in `lib/env.ts`, so prod works without build vars. Blog adds **no new env or CSP origins** (Sanity image CDN already allowed).
-- **Cloudflare:** runtime secrets set via `wrangler secret put` (persist across `npm run deploy`). Public keys default in code.
+- **Vercel:** prod + preview env set since Phase 3. Public keys (GA id, Turnstile site key, Calendly URL) default in `lib/env.ts`. No new env in Phases 4–5.
+- **Cloudflare:** runtime secrets (`BREVO_*`, `TURNSTILE_SECRET_KEY`) set via `wrangler secret put` (persist across `npm run deploy`). Public keys default in code.
 
-## Gotchas specific to Phase 4 (don't re-learn)
-- **`tag` is a RESERVED key in Sanity `QueryParams`** (typed `never` — it's a fetch-option name). A GROQ param named `$tag` fails tsc. `POSTS_BY_TAG_QUERY` uses **`$tagName`**; pass `{ tagName: tag }`.
-- **Tags are free-text strings**, slugified for URLs (`slugifyTag`) and resolved back via `TAGS_QUERY` + `resolveTagSlug`. Two tags slugifying to the same value would collide (first match wins) — fine at this scale.
-- **Portable Text inline images** size from the asset ref (`image-<id>-<W>x<H>-<fmt>`) since the body query returns the raw block (no `asset->metadata`). If that parse ever fails it falls back to 1280×853.
-- **BlogCard cover degrades** to a text-only card with no asset (consistent with the home sections' no-assets pattern) — no posts have covers yet.
-- **`generateStaticParams` pre-renders known posts/tags at build**; new posts appear within the 60s ISR window. The signature-verified publish webhook is still deferred (would make them appear instantly).
-- **`generate_image` MCP writes to the DRAFT** — must `publish_documents` afterwards to make the cover live.
-- **Redeploy the hosted Studio** (`cd studio && npx sanity deploy`) after any schema/structure change so editors see new fields.
+## Gotchas specific to Phase 5 (don't re-learn)
+- **Consent modal blocks E2E clicks.** `ConsentBanner` renders a full-screen scrim (`layer-banner ... fixed inset-0`) on first visit (when `rr-consent` cookie is null), intercepting pointer events. The shared `tests/e2e/fixtures.ts` pre-seeds `rr-consent=denied` (domain-scoped, works for :3000 and :8787) so the modal never shows. Any new spec must `import { test } from "./fixtures"`, not `@playwright/test`.
+- **Real Turnstile site key is domain-locked** → unusable in headless localhost. Use the always-pass TEST keys for E2E (see run section above). The MCP/agent path and prod hosts use the real keys.
+- **`role="alert"` collides with Next's route announcer** (`#__next-route-announcer__`). Scope form-error assertions to the form (`form.getByRole("alert")`), not the page.
+- **Playwright `await use(...)` fixture param** trips `react-hooks/rules-of-hooks` (React 19 `use`). Disabled for `tests/**` in `eslint.config.mjs`.
+- **Don't run all specs per-viewport.** Responsive breakpoints are looped inside `responsive.spec.ts`; the form/live specs must run **once**, not once per viewport (would multiply real-email side-effects).
+- **`npm audit` highs are tooling-only** (`wrangler`/`miniflare`/`undici`, `sanity` CLI `ws`/`typeid-js`) — not in the deployed runtime, pre-existing, not from Phase 5. A non-breaking `npm audit fix` maintenance pass is deferred.
 
-## Open questions / deferred (still matter)
-- **Test runner** — none yet; Phase 5 adds Playwright. Blog correctness is currently covered only by the manual curl smoke test above.
-- **Sanity revalidation webhook + draft/preview** — deferred; posts rely on 60s ISR.
-- **Real blog content + cover images** — the 2 seeded posts are placeholders; Ricki replaces/extends in the Studio. Cover images optional.
-- **Brevo prod sender** — verify a `rickireign.com` domain sender (DOI + contact still send via a `brevosend.com` wrapper).
+## Open questions / carry-over (still matter — restate each handoff until done)
+- **Brevo prod sender** — verify a `rickireign.com` domain sender (DOI + contact still send via a `brevosend.com` wrapper / the verified gmail).
 - **Lawyer review** of `/privacy` + `/terms` before public launch.
+- **Domain cutover** — Sanity/Studio + deploys point at `rickireign.vercel.app` (dev/staging); the apex still hosts the OLD site. Cut over when ready.
+- **Sanity revalidation webhook + draft/preview** — deferred; posts rely on 60s ISR (new posts appear within the window, not instantly).
+- **Real blog content + cover images** — the 2 seeded posts are placeholders; Ricki replaces/extends in the hosted Studio (`rickireign.sanity.studio`).
+- **Sanity AI image add-on** — Studio ✨ Generate is wired but **plan-gated** ("Project is not allowed to use this feature"); enable in sanity.io/manage → Plan, or build a free auto-cover pipeline. The MCP `generate_image` path IS entitled meanwhile.
+- **No-code tag management** — promote free-text tags to a reference `tag` doc type if Ricki wants to manage them in the Studio.
 - **contactEmail** — `welcome@rickireign.com` live/monitored; confirm canonical vs `hello@`.
-- **Calendly** — real/active Discovery Call event; URL is the personal account (`gregorioe-moreta/discovery-call`) — swap if Ricki uses another.
+- **Calendly** — Discovery Call event is live; URL is the personal account (`gregorioe-moreta/discovery-call`) — swap if Ricki uses another.
+- **Dependency hygiene** — run a non-breaking `npm audit fix` pass for the tooling-only advisories.
 
-## If you're starting Phase 5 cold, know this
-- Production on `main` is green on both targets; content is real and queryable via the Sanity MCP (`perspective: "published"`), now including `author` + 2 `post`s.
-- Schema changes need `cd studio && npm run schema:deploy`; Studio runs at `:3333`.
-- Run the end-of-phase ritual with the **`/phase-handoff`** skill.
-- Subagents can't do git/network writes — run git/`gh`/deploy from the main session. Never delete branches. See `CLAUDE.md` for the full rule set + Phase 0–4 gotchas.
+## If you're starting cold, know this
+- All six phases done; prod is live + tested on both targets; content is real and queryable via the Sanity MCP (`perspective: "published"`).
+- Run the test suites before any change that touches forms, nav, or the Journal (`npm test` + `npm run test:e2e`).
+- Schema changes need `cd studio && npm run schema:deploy` + `npx sanity deploy`; Studio runs at `:3333`.
+- Run the end-of-phase ritual with the **`/phase-handoff`** skill. Subagents can't do git/network writes — run git/`gh`/deploy from the main session. Never delete branches. See `CLAUDE.md` for the full rule set + Phase 0–5 gotchas.
