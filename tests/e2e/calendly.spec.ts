@@ -22,7 +22,7 @@ test("Discovery Call CTA opens Calendly with the scheduling URL", async ({
 
   await page.goto("/somatics");
 
-  const cta = page.getByRole("button", { name: /discovery call/i }).first();
+  const cta = page.getByRole("link", { name: /discovery call/i }).first();
   await expect(cta).toBeVisible();
   await cta.click();
 

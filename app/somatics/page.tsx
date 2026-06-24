@@ -48,53 +48,48 @@ export default async function SomaticsPage() {
   return (
     <Section aria-label={title ?? "Somatics"} className="pt-16 md:pt-24">
       <Container className="flex flex-col gap-stack">
-        <div className="grid items-start gap-12 lg:grid-cols-12 lg:gap-gutter">
-          <div className={showPortrait ? "lg:col-span-7" : "max-w-3xl lg:col-span-12"}>
-            <header className="flex flex-col gap-4">
-              {label ? (
-                <p className="font-sans text-label-md uppercase text-secondary">
-                  {label}
-                </p>
-              ) : null}
-              {title ? (
-                <h1 className="max-w-2xl font-display text-headline-lg-mobile text-on-surface md:text-headline-lg text-balance">
-                  {title}
-                </h1>
-              ) : null}
-              {intro ? (
-                <p className="max-w-2xl font-sans text-body-lg text-on-surface-variant text-pretty">
-                  {intro}
-                </p>
-              ) : null}
-            </header>
-
-            {hasBody ? (
-              <div className="mt-8 flex max-w-2xl flex-col gap-4">
-                <PortableText value={body} components={bodyComponents} />
-              </div>
-            ) : null}
-          </div>
-
-          {showPortrait ? (
-            <div className="lg:col-span-5">
-              <SanityImage
-                image={portrait}
-                alt="Ricki Reign"
-                width={680}
-                height={820}
-                sizes="(min-width: 1024px) 40vw, 100vw"
-                className="w-full rounded-xl object-cover shadow-ambient"
-              />
-            </div>
+        <header className="flex max-w-3xl flex-col gap-4">
+          {label ? (
+            <p className="font-sans text-label-md uppercase text-secondary">
+              {label}
+            </p>
           ) : null}
-        </div>
+          {title ? (
+            <h1 className="font-display text-headline-lg-mobile text-on-surface md:text-headline-lg text-balance">
+              {title}
+            </h1>
+          ) : null}
+          {intro ? (
+            <p className="font-sans text-body-lg text-on-surface-variant text-pretty">
+              {intro}
+            </p>
+          ) : null}
+        </header>
+
+        {showPortrait ? (
+          <SanityImage
+            image={portrait}
+            alt="Ricki Reign's somatic practice"
+            width={1408}
+            height={792}
+            priority
+            sizes="(min-width: 1024px) 64rem, 100vw"
+            className="aspect-[16/9] w-full rounded-xl object-cover shadow-ambient"
+          />
+        ) : null}
+
+        {hasBody ? (
+          <div className="flex max-w-2xl flex-col gap-4">
+            <PortableText value={body} components={bodyComponents} />
+          </div>
+        ) : null}
 
         {items.length > 0 ? (
           <ul className="grid gap-gutter sm:grid-cols-2 lg:grid-cols-3">
             {items.map((item, i) => (
               <li
                 key={item._key}
-                className="flex h-full flex-col gap-4 rounded-lg border border-primary-container/10 bg-surface-container-lowest p-7"
+                className="flex h-full flex-col gap-3 rounded-lg border border-primary-container/10 bg-surface-container-lowest p-7"
               >
                 <span
                   aria-hidden="true"
@@ -102,14 +97,12 @@ export default async function SomaticsPage() {
                 >
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <h2 className="font-display text-headline-md text-on-surface">
+                <h2 className="line-clamp-2 min-h-[2lh] font-display text-headline-md text-on-surface">
                   {item.title}
                 </h2>
-                {item.description ? (
-                  <p className="font-sans text-body-md text-on-surface-variant">
-                    {item.description}
-                  </p>
-                ) : null}
+                <p className="line-clamp-3 min-h-[3lh] font-sans text-body-md text-on-surface-variant text-pretty">
+                  {item.description ?? " "}
+                </p>
               </li>
             ))}
           </ul>

@@ -88,6 +88,7 @@ export interface TheWork {
   title?: string;
   intro?: string;
   businesses?: Business[];
+  somaticsImage?: SanityImage;
   somatics?: SomaticsCard;
 }
 

@@ -3,22 +3,26 @@ import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/Button";
 import { SanityImage, hasImageAsset } from "@/components/ui/SanityImage";
 import { cn } from "@/lib/cn";
-import type { Business, SomaticsCard, TheWork as TheWorkData } from "@/lib/sanity/types";
+import type { Business, SanityImage as SanityImageRef, TheWork as TheWorkData } from "@/lib/sanity/types";
 
 /**
  * Section 3 — The Work. The merged section that replaced "The Practice" +
  * "Founded & Led". One leadership identity expressed across three arenas:
- * Exhale Under Pressure and Community Birth Village (each links out to its own
- * site) and Somatics (links to the internal /somatics page). This section
- * EXPLAINS the work so a visitor understands each arena before clicking —
- * there is deliberately no booking CTA here (booking lives only on /somatics).
+ * Somatics first (it lives on this site → /somatics), then Exhale Under
+ * Pressure and Community Birth Village (each links out to its own site). This
+ * section EXPLAINS the work so a visitor understands each arena before clicking
+ * — there is deliberately no booking CTA here (booking lives only on /somatics).
+ *
+ * Cards are strictly uniform: a fixed 16:9 media area, then title / tagline /
+ * description on reserved (clamped) heights so every card aligns and the link
+ * pins to a common bottom edge.
  */
 export function TheWork({ data }: { data: TheWorkData | undefined }) {
   if (!data) return null;
 
   const businesses = (data.businesses ?? []).filter((b) => b.name);
   const somatics = data.somatics;
-  const hasCards = businesses.length > 0 || Boolean(somatics?.name);
+  const hasCards = Boolean(somatics?.name) || businesses.length > 0;
 
   return (
     <Section id="work" aria-label={data.title ?? "The work"}>
@@ -37,11 +41,22 @@ export function TheWork({ data }: { data: TheWorkData | undefined }) {
         </header>
 
         {hasCards ? (
-          <ul className="grid gap-gutter sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid items-stretch gap-gutter sm:grid-cols-2 lg:grid-cols-3">
+            {/* Somatics first — it's the one that lives on this site. */}
+            {somatics?.name ? (
+              <ArenaCard
+                name={somatics.name}
+                tagline={somatics.tagline}
+                description={somatics.description}
+                image={data.somaticsImage}
+                href="/somatics"
+                linkLabel={somatics.linkLabel ?? "Learn more"}
+                external={false}
+              />
+            ) : null}
             {businesses.map((business) => (
               <BusinessCard key={business._id} business={business} />
             ))}
-            {somatics?.name ? <SomaticsCardItem somatics={somatics} /> : null}
           </ul>
         ) : null}
       </Container>
@@ -49,7 +64,7 @@ export function TheWork({ data }: { data: TheWorkData | undefined }) {
   );
 }
 
-/** Shared card chrome so the three arenas read as one uniform row. */
+/** Shared, fixed-height card chrome so the three arenas read as one even row. */
 function ArenaCard({
   name,
   tagline,
@@ -62,13 +77,13 @@ function ArenaCard({
   name: string;
   tagline?: string;
   description?: string;
-  image?: Business["image"];
+  image?: SanityImageRef;
   href: string;
   linkLabel: string;
   external: boolean;
 }) {
   return (
-    <li className="flex h-full flex-col overflow-hidden rounded-xl border border-primary-container/10 bg-surface-container-lowest">
+    <li className="flex h-full flex-col overflow-hidden rounded-xl border border-primary-container/10 bg-surface-container-lowest shadow-ambient">
       {hasImageAsset(image) ? (
         <SanityImage
           image={image}
@@ -82,32 +97,26 @@ function ArenaCard({
         <ArenaCover name={name} />
       )}
       <div className="flex flex-1 flex-col gap-3 p-7">
-        <h3 className="font-display text-headline-md text-on-surface">{name}</h3>
-        {tagline ? (
-          <p className="font-display italic text-body-lg text-on-surface-variant">
-            {tagline}
-          </p>
-        ) : null}
-        {description ? (
-          <p className="font-sans text-body-md text-on-surface-variant">
-            {description}
-          </p>
-        ) : null}
+        <h3 className="line-clamp-1 min-h-[1lh] font-display text-headline-md text-on-surface">
+          {name}
+        </h3>
+        <p className="line-clamp-1 min-h-[1lh] font-display italic text-body-lg text-on-surface-variant">
+          {tagline ?? " "}
+        </p>
+        <p className="line-clamp-3 min-h-[3lh] font-sans text-body-md text-on-surface-variant text-pretty">
+          {description ?? " "}
+        </p>
         <div className="mt-auto pt-2">
-          {external ? (
-            <Button
-              href={href}
-              target="_blank"
-              variant="tertiary"
-              aria-label={`Visit ${name} (opens in a new tab)`}
-            >
-              {linkLabel}
-            </Button>
-          ) : (
-            <Button href={href} variant="tertiary" aria-label={`${linkLabel}: ${name}`}>
-              {linkLabel}
-            </Button>
-          )}
+          <Button
+            href={href}
+            variant="tertiary"
+            target={external ? "_blank" : undefined}
+            aria-label={
+              external ? `Visit ${name} (opens in a new tab)` : `${linkLabel}: ${name}`
+            }
+          >
+            {linkLabel}
+          </Button>
         </div>
       </div>
     </li>
@@ -128,20 +137,12 @@ function BusinessCard({ business }: { business: Business }) {
   );
 }
 
-function SomaticsCardItem({ somatics }: { somatics: SomaticsCard }) {
-  return (
-    <ArenaCard
-      name={somatics.name ?? "Somatics"}
-      tagline={somatics.tagline}
-      description={somatics.description}
-      href="/somatics"
-      linkLabel={somatics.linkLabel ?? "Learn more"}
-      external={false}
-    />
-  );
-}
-
-/** On-brand gradient panel for an arena with no image, so the row stays even. */
+/**
+ * On-brand placeholder for an arena with no image — a layered Forest-Green →
+ * Deep-Teal field lit by a soft luminous-teal glow, with the subtle dotted
+ * "ancestral grid" texture. Reads as an intentional cover, not a flat panel.
+ * (Silent safety net once AI/uploaded card images exist.)
+ */
 function ArenaCover({ name, className }: { name: string; className?: string }) {
   return (
     <div
@@ -152,8 +153,14 @@ function ArenaCover({ name, className }: { name: string; className?: string }) {
         className,
       )}
     >
+      {/* Soft luminous-teal glow, off-centre, for depth. */}
       <div
-        className="absolute inset-0 opacity-[0.18]"
+        className="absolute -right-8 -top-10 h-40 w-40 rounded-full opacity-40 blur-3xl"
+        style={{ background: "var(--color-luminous-teal)" }}
+      />
+      {/* Dotted ancestral-grid texture. */}
+      <div
+        className="absolute inset-0 opacity-[0.16]"
         style={{
           backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
           backgroundSize: "16px 16px",

@@ -18,7 +18,8 @@ export const HOME_PAGE_QUERY = defineQuery(`*[_type == "homePage"][0]{
     title,
     intro,
     businesses[]->{ _id, name, tagline, description, image, externalUrl, order },
-    somatics
+    somaticsImage,
+    somatics{ name, tagline, description, linkLabel }
   },
   about,
   whoIsThisFor,

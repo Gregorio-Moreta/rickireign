@@ -97,6 +97,12 @@ export const homePage = defineType({
           ],
         }),
         defineField({
+          name: "somaticsImage",
+          title: "Somatics card image",
+          type: "image",
+          options: { hotspot: true },
+        }),
+        defineField({
           name: "somatics",
           title: "Somatics card (links to /somatics)",
           type: "object",
