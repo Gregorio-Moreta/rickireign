@@ -8,8 +8,10 @@ import { publicEnv } from "@/lib/env";
 
 type Status = "idle" | "submitting" | "success" | "error";
 
+// Clearly bordered, filled field (DESIGN.md's 10%-bottom-border was too faint
+// to see, especially in dark mode). Visible outline in both themes + teal focus.
 const fieldClass =
-  "min-h-11 w-full border-b-2 border-earth-charcoal/10 bg-transparent px-1 py-3 font-sans text-body-md text-on-surface placeholder:text-outline focus:border-luminous-teal focus:outline-none disabled:opacity-60";
+  "min-h-11 w-full rounded-md border border-outline bg-surface-container-lowest px-3 py-2.5 font-sans text-body-md text-on-surface placeholder:text-outline focus:border-luminous-teal focus:outline-none focus:ring-2 focus:ring-luminous-teal/40 disabled:opacity-60";
 
 /**
  * Contact form (Brevo transactional email). Posts to /api/contact, which emails

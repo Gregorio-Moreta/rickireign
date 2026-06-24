@@ -101,7 +101,7 @@ export function NewsletterForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={status === "submitting"}
-          className="min-h-11 flex-1 border-b-2 border-earth-charcoal/10 bg-transparent px-1 py-3 font-sans text-body-md text-on-surface placeholder:text-outline focus:border-luminous-teal focus:outline-none disabled:opacity-60"
+          className="min-h-11 flex-1 rounded-md border border-outline bg-surface-container-lowest px-3 py-2.5 font-sans text-body-md text-on-surface placeholder:text-outline focus:border-luminous-teal focus:outline-none focus:ring-2 focus:ring-luminous-teal/40 disabled:opacity-60"
         />
 
         {/* Honeypot — visually hidden; bots fill it, humans never see it. */}

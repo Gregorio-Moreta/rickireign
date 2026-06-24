@@ -28,8 +28,8 @@ interface NavProps {
 
 const linkClasses = cn(
   "font-sans text-label-md uppercase text-on-surface-variant",
-  "transition-colors duration-200 hover:text-primary-container",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container",
+  "transition-colors duration-200 hover:text-primary",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-luminous-teal",
   "focus-visible:ring-offset-2 focus-visible:ring-offset-surface rounded-sm",
 );
 
@@ -52,7 +52,7 @@ export function Nav({ wordmark, links }: NavProps) {
           className={cn(
             "font-display text-xl tracking-tight text-on-surface",
             "rounded-sm focus-visible:outline-none focus-visible:ring-2",
-            "focus-visible:ring-primary-container focus-visible:ring-offset-2",
+            "focus-visible:ring-luminous-teal focus-visible:ring-offset-2",
             "focus-visible:ring-offset-surface",
           )}
         >
@@ -90,7 +90,7 @@ export function Nav({ wordmark, links }: NavProps) {
               "inline-flex h-10 w-10 items-center justify-center rounded md:hidden",
               "cursor-pointer text-on-surface",
               "transition-colors duration-200 hover:bg-surface-container",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-luminous-teal",
               "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
             )}
           >

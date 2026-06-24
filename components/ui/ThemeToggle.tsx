@@ -52,7 +52,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         "inline-flex h-10 w-10 items-center justify-center rounded",
         "cursor-pointer text-on-surface",
         "transition-colors duration-200 hover:bg-surface-container",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-luminous-teal",
         "focus-visible:ring-offset-2 focus-visible:ring-offset-surface",
         className,
       )}
