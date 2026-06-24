@@ -26,7 +26,7 @@ export default async function PrivacyPage() {
           <h1 className="font-display text-headline-lg-mobile text-on-surface md:text-headline-lg text-balance">
             Privacy Policy
           </h1>
-          <p className="font-sans text-body-md text-outline">
+          <p className="font-sans text-body-md text-on-surface-variant">
             Last updated {LAST_UPDATED}
           </p>
         </header>
