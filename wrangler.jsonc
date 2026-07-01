@@ -1,7 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "rickireign",
-  "main": ".open-next/worker.js",
+  // Custom entry: wraps the OpenNext-generated `.open-next/worker.js` with
+  // @sentry/cloudflare (see cloudflare/worker.ts). Wrangler bundles from here.
+  "main": "cloudflare/worker.ts",
   "compatibility_date": "2025-09-01",
   "compatibility_flags": [
     // Node.js API compatibility (required by the OpenNext Cloudflare adapter)
@@ -12,6 +14,13 @@
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "vars": {
+    // Sentry DSN for the @sentry/cloudflare worker wrapper (cloudflare/worker.ts).
+    // Public value (same as the build-inlined NEXT_PUBLIC_SENTRY_DSN); dormant
+    // if removed. Managed here because a wrangler.jsonc deploy overwrites remote
+    // runtime vars — keep runtime vars in this file, not the dashboard.
+    "NEXT_PUBLIC_SENTRY_DSN": "https://03bea0b82197b6f523bbfc36d73506d1@o4511575656497152.ingest.us.sentry.io/4511621914361856"
   },
   "services": [
     {

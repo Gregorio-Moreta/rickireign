@@ -91,6 +91,12 @@ export function Turnstile({
           "expired-callback": () => callbacks.current.onExpire?.(),
           "error-callback": () => callbacks.current.onError?.(),
           theme: "light",
+          // Only show the widget when Cloudflare actually needs interaction. For
+          // clean browsers (managed mode auto-passes), the token is issued
+          // invisibly and `callback` still fires — so no dangling self-checking
+          // checkbox, while a real challenge still surfaces when required. The
+          // server siteverify (lib/turnstile.ts) remains the enforcing gate.
+          appearance: "interaction-only",
         });
       })
       .catch(() => callbacks.current.onError?.());
