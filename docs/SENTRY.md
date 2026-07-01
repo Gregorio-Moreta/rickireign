@@ -1,6 +1,60 @@
-# Sentry — deferred setup plan
+# Sentry
 
-**Status:** Not installed. There is no Next.js app in the repo yet. This doc captures *how* we'll add Sentry once the app skeleton exists, adapted from the official [Sentry Next.js SDK guide](https://github.com/getsentry/sentry-for-ai/blob/main/skills/sentry-nextjs-sdk/SKILL.md) to this project's conventions (`CLAUDE.md`, `secure-defaults`, privacy-first posture).
+**Status: INSTALLED + live (dormant without a DSN).** `@sentry/nextjs` v10 lands on both deploy targets; the **Cloudflare** target additionally uses `@sentry/cloudflare` (see the split below). The historical "deferred plan" is kept at the bottom for context.
+
+---
+
+## Current architecture (implemented — branch `007-cf-sentry-bundle-fix`)
+
+### Why a dual-SDK split exists
+
+`@sentry/nextjs`'s **server** SDK is `@sentry/node` + the full **OpenTelemetry auto-instrumentation suite** (http, express, redis, postgres, mysql, mongo, graphql, vercel-ai, …). In this app that compiles to **~5.5 MiB raw** across two ~2.6 MiB chunks (an SSR copy + a Node copy). Gzipped, it pushed the OpenNext Cloudflare **Worker to ~3.27 MiB — over Cloudflare's 3 MiB free-plan Worker size limit** (measured after gzip; free = 3 MiB, paid = 10 MiB). Every `006`/`main` Cloudflare deploy since Sentry was added **failed** `wrangler` size validation, freezing CF prod on a pre-migration commit (its `/journal` then 500'd against the migrated tag data). Vercel (Node) was unaffected — no size limit there.
+
+None of those Node instrumentations even **run** on Cloudflare's workerd (there's no express/redis/pg in the Worker), so on CF they were pure dead weight.
+
+### The split
+
+| Surface | SDK | Notes |
+|---|---|---|
+| **Client / browser** (both targets) | `@sentry/nextjs` (`instrumentation-client.ts`) | Unchanged. Browser error capture everywhere. |
+| **Server on Vercel** (Node) | `@sentry/nextjs` (`sentry.server.config.ts` / `sentry.edge.config.ts` via `instrumentation.ts`) | Full server SDK — Node has no size limit. |
+| **Server on Cloudflare** (workerd) | `@sentry/cloudflare` (`cloudflare/worker.ts`) | Workers-native, tiny, no OTel Node suite. Wraps the OpenNext Worker's fetch with `Sentry.withSentry`. |
+
+### How the Node SDK is kept out of the Cloudflare bundle
+
+- **`NEXT_PUBLIC_BUILD_TARGET=cloudflare`** is set only on the `opennextjs-cloudflare build` step (package.json `deploy`/`preview`/`upload`). Next inlines it, so it's a build-time constant that Turbopack uses for dead-code elimination.
+- **`instrumentation.ts`** has **no top-level `@sentry/nextjs` import**. `register()` and `onRequestError` early-`return` when `NEXT_PUBLIC_BUILD_TARGET === "cloudflare"`, so the `@sentry/nextjs` (`sentry.server.config`) imports become unreachable and are tree-shaken out of the CF build. On Vercel the flag is unset → the full server SDK loads.
+- **`app/global-error.tsx`** imports Sentry **dynamically inside its `useEffect`** (browser-only) instead of statically — a static import in a `"use client"` component gets bundled into SSR too, dragging the Node SDK back in. The effect only runs in the browser (where client Sentry is already loaded), so this costs nothing and keeps the server bundle clean.
+- **`cloudflare/worker.ts`** is the wrangler `main` (see `wrangler.jsonc`): it imports the generated `.open-next/worker.js`, wraps its default `fetch` with `@sentry/cloudflare`'s `withSentry`, and re-exports the OpenNext Durable Objects. It reads the DSN from a wrangler.jsonc `var` (`NEXT_PUBLIC_SENTRY_DSN`, public). It is **excluded from the app `tsc`** (like OpenNext's own worker entry) because its import only exists after a build.
+
+### Result (measured)
+
+| Build | Worker gzip | vs 3 MiB free limit |
+|---|---|---|
+| Before (full `@sentry/nextjs` server) | **3268 KiB** | ❌ over by ~196 KiB |
+| After (this branch) | **2486 KiB** | ✅ ~586 KiB headroom |
+
+workerd boots and serves every route 200 (incl. `/journal`, `/journal/tag/*`), console-clean.
+
+### Known dormant residual
+
+`withSentryConfig` still injects a `@sentry/nextjs` SSR chunk (~2.6 MiB raw / ~600 KiB gzip) into the Cloudflare build via Turbopack — the webpack `autoInstrument*: false` options **do not apply under Turbopack**, so we can't switch it off cleanly. It is **harmless**: server Sentry is never `init()`-ed on CF (the guard above), workerd boots fine with it present, and we're comfortably under the limit. Leaving it keeps the `/monitoring` tunnel + client source-map upload working on CF without CSP changes. If the Worker later approaches 3 MiB again, the next lever is a Turbopack `resolveAlias` stubbing `@sentry/nextjs`'s server entry on the CF build (or the paid upgrade below).
+
+### Future: upgrading to Workers Paid ($5/mo → 10 MiB limit)
+
+If we ever want the *simplest* possible setup (one SDK, no split), a **Workers Paid** plan lifts the limit to 10 MiB and the entire `007` split becomes unnecessary. To revert:
+1. Cloudflare dash → **Workers Paid** plan on the account.
+2. Delete `cloudflare/worker.ts`; set `wrangler.jsonc` `main` back to `.open-next/worker.js`; drop the `vars.NEXT_PUBLIC_SENTRY_DSN` there.
+3. Remove the `NEXT_PUBLIC_BUILD_TARGET=cloudflare` prefix from the `deploy`/`preview`/`upload` scripts.
+4. Restore `instrumentation.ts` to the simple `import * as Sentry from "@sentry/nextjs"` form; revert `app/global-error.tsx` to a static import (optional — the dynamic import is harmless).
+5. `npm uninstall @sentry/cloudflare`; remove `cloudflare/worker.ts` from `tsconfig` exclude.
+Then `@sentry/nextjs` server SDK deploys as-is to both targets (~3.27 MiB, fits in 10 MiB).
+
+---
+
+## Historical: deferred setup plan (pre-install)
+
+This doc originally captured *how* we'd add Sentry, adapted from the official [Sentry Next.js SDK guide](https://github.com/getsentry/sentry-for-ai/blob/main/skills/sentry-nextjs-sdk/SKILL.md) to this project's conventions (`CLAUDE.md`, `secure-defaults`, privacy-first posture). Retained for the privacy-deviation rationale below (still current).
 
 ## When it lands
 
