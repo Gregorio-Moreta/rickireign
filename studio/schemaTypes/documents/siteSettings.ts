@@ -77,6 +77,33 @@ export const siteSettings = defineType({
       validation: (rule) => rule.email(),
     }),
     defineField({ name: "footerText", type: "string" }),
+    // Cookie-consent modal copy. The `/privacy` link and the "Cookie settings"
+    // reference are rendered structurally in code; only the prose is editable
+    // here. Every field has an in-code fallback, so leaving one blank is safe.
+    defineField({
+      name: "consent",
+      title: "Cookie consent modal",
+      type: "object",
+      options: { collapsible: true, collapsed: true },
+      fields: [
+        defineField({ name: "title", type: "string", initialValue: "A note on cookies" }),
+        defineField({
+          name: "body",
+          type: "text",
+          rows: 3,
+          description:
+            'The "See our Privacy Policy" link is appended automatically.',
+        }),
+        defineField({ name: "acceptLabel", type: "string", initialValue: "Accept" }),
+        defineField({ name: "declineLabel", type: "string", initialValue: "Decline" }),
+        defineField({
+          name: "cookieSettingsLabel",
+          title: "Footer re-open link label",
+          type: "string",
+          initialValue: "Cookie settings",
+        }),
+      ],
+    }),
     defineField({ name: "seo", type: "seo" }),
   ],
   preview: { prepare: () => ({ title: "Site Settings" }) },

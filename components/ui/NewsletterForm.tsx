@@ -5,15 +5,32 @@ import { Button } from "@/components/ui/Button";
 import { Turnstile } from "@/components/ui/Turnstile";
 import { HONEYPOT_FIELD } from "@/lib/validation";
 import { publicEnv } from "@/lib/env";
+import type { NewsletterFormCopy } from "@/lib/sanity/types";
 
 type Status = "idle" | "submitting" | "success" | "error";
+
+// Editorial microcopy from Sanity (homePage.newsletter.form) with in-code
+// fallbacks so a blank field never breaks the form. The generic error /
+// verification prompts stay in code (system-level).
+const FALLBACK = {
+  buttonLabel: "Subscribe",
+  submittingLabel: "Subscribing…",
+  placeholder: "you@example.com",
+  successMessage: "Almost there — check your inbox and confirm to finish subscribing.",
+} as const;
 
 /**
  * Newsletter sign-up form (Brevo double opt-in). Posts to /api/newsletter,
  * which sends a confirmation email; success here means "check your inbox", not
  * "subscribed". Turnstile-gated and honeypot-protected.
  */
-export function NewsletterForm() {
+export function NewsletterForm({ copy }: { copy?: NewsletterFormCopy }) {
+  const t = {
+    buttonLabel: copy?.buttonLabel || FALLBACK.buttonLabel,
+    submittingLabel: copy?.submittingLabel || FALLBACK.submittingLabel,
+    placeholder: copy?.placeholder || FALLBACK.placeholder,
+    successMessage: copy?.successMessage || FALLBACK.successMessage,
+  };
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -49,9 +66,7 @@ export function NewsletterForm() {
 
       if (res.ok) {
         setStatus("success");
-        setMessage(
-          "Almost there — check your inbox and confirm to finish subscribing.",
-        );
+        setMessage(t.successMessage);
         setEmail("");
         return;
       }
@@ -97,7 +112,7 @@ export function NewsletterForm() {
           name="email"
           autoComplete="email"
           required
-          placeholder="you@example.com"
+          placeholder={t.placeholder}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={status === "submitting"}
@@ -117,7 +132,7 @@ export function NewsletterForm() {
         </div>
 
         <Button type="submit" variant="primary" disabled={status === "submitting"}>
-          {status === "submitting" ? "Subscribing…" : "Subscribe"}
+          {status === "submitting" ? t.submittingLabel : t.buttonLabel}
         </Button>
       </div>
 

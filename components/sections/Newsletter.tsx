@@ -1,13 +1,13 @@
 import { Section } from "@/components/layout/Section";
 import { Container } from "@/components/layout/Container";
 import { NewsletterForm } from "@/components/ui/NewsletterForm";
-import type { SimpleSection } from "@/lib/sanity/types";
+import type { NewsletterSection } from "@/lib/sanity/types";
 
 /**
  * Section 7 — Join the list. Heading + body from Sanity above the live
  * newsletter form (Brevo double opt-in + Turnstile, in NewsletterForm).
  */
-export function Newsletter({ data }: { data: SimpleSection | undefined }) {
+export function Newsletter({ data }: { data: NewsletterSection | undefined }) {
   if (!data) return null;
 
   return (
@@ -25,7 +25,7 @@ export function Newsletter({ data }: { data: SimpleSection | undefined }) {
             </p>
           ) : null}
 
-          <NewsletterForm />
+          <NewsletterForm copy={data.form} />
         </div>
       </Container>
     </Section>

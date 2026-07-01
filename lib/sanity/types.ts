@@ -42,12 +42,22 @@ export interface Seo {
   ogImage?: SanityImage;
 }
 
+/** Cookie-consent modal copy (the `/privacy` link is appended in code). */
+export interface ConsentCopy {
+  title?: string;
+  body?: string;
+  acceptLabel?: string;
+  declineLabel?: string;
+  cookieSettingsLabel?: string;
+}
+
 export interface SiteSettings {
   wordmark?: string;
   nav?: { _key: string; label: string; anchor: string }[];
   social?: SocialLink[];
   contactEmail?: string;
   footerText?: string;
+  consent?: ConsentCopy;
   seo?: Seo;
 }
 
@@ -132,6 +142,38 @@ export interface SimpleSection {
   body?: string;
 }
 
+/** Newsletter sign-up form microcopy (system-level errors stay in code). */
+export interface NewsletterFormCopy {
+  buttonLabel?: string;
+  submittingLabel?: string;
+  placeholder?: string;
+  successMessage?: string;
+}
+
+/** Contact form microcopy (system-level errors stay in code). */
+export interface ContactFormCopy {
+  buttonLabel?: string;
+  submittingLabel?: string;
+  successMessage?: string;
+}
+
+export interface NewsletterSection extends SimpleSection {
+  form?: NewsletterFormCopy;
+}
+
+export interface ConnectSection extends SimpleSection {
+  form?: ContactFormCopy;
+}
+
+/** Journal index page (singleton) — intro chrome + list SEO. */
+export interface JournalPage {
+  eyebrow?: string;
+  heading?: string;
+  intro?: string;
+  emptyState?: string;
+  seo?: Seo;
+}
+
 export interface Author {
   name?: string;
   image?: SanityImage;
@@ -169,7 +211,7 @@ export interface HomePage {
   theWork?: TheWork;
   about?: About;
   whoIsThisFor?: WhoIsThisFor;
-  newsletter?: SimpleSection;
-  connect?: SimpleSection;
+  newsletter?: NewsletterSection;
+  connect?: ConnectSection;
   seo?: Seo;
 }

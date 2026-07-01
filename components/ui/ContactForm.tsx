@@ -5,8 +5,17 @@ import { Button } from "@/components/ui/Button";
 import { Turnstile } from "@/components/ui/Turnstile";
 import { HONEYPOT_FIELD } from "@/lib/validation";
 import { publicEnv } from "@/lib/env";
+import type { ContactFormCopy } from "@/lib/sanity/types";
 
 type Status = "idle" | "submitting" | "success" | "error";
+
+// Editorial microcopy from Sanity (homePage.connect.form) with in-code
+// fallbacks. Generic error / verification prompts stay in code (system-level).
+const FALLBACK = {
+  buttonLabel: "Send message",
+  submittingLabel: "Sending…",
+  successMessage: "Thank you — your message is on its way. Ricki will be in touch.",
+} as const;
 
 // Clearly bordered, filled field (DESIGN.md's 10%-bottom-border was too faint
 // to see, especially in dark mode). Visible outline in both themes + teal focus.
@@ -18,7 +27,12 @@ const fieldClass =
  * the site's contact inbox with the visitor as reply-to. Turnstile-gated and
  * honeypot-protected.
  */
-export function ContactForm() {
+export function ContactForm({ copy }: { copy?: ContactFormCopy }) {
+  const t = {
+    buttonLabel: copy?.buttonLabel || FALLBACK.buttonLabel,
+    submittingLabel: copy?.submittingLabel || FALLBACK.submittingLabel,
+    successMessage: copy?.successMessage || FALLBACK.successMessage,
+  };
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [token, setToken] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -59,7 +73,7 @@ export function ContactForm() {
 
       if (res.ok) {
         setStatus("success");
-        setMessage("Thank you — your message is on its way. Ricki will be in touch.");
+        setMessage(t.successMessage);
         setForm({ name: "", email: "", message: "" });
         return;
       }
@@ -170,7 +184,7 @@ export function ContactForm() {
 
       <div className="flex flex-col items-start gap-3">
         <Button type="submit" variant="primary" disabled={status === "submitting"}>
-          {status === "submitting" ? "Sending…" : "Send message"}
+          {status === "submitting" ? t.submittingLabel : t.buttonLabel}
         </Button>
         {status === "error" && message ? (
           <p role="alert" className="font-sans text-body-md text-error">

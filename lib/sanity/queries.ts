@@ -7,6 +7,16 @@ export const SITE_SETTINGS_QUERY = defineQuery(`*[_type == "siteSettings"][0]{
   social,
   contactEmail,
   footerText,
+  consent,
+  seo
+}`);
+
+/** Journal index page (singleton) — intro chrome + list SEO. */
+export const JOURNAL_PAGE_QUERY = defineQuery(`*[_type == "journalPage"][0]{
+  eyebrow,
+  heading,
+  intro,
+  emptyState,
   seo
 }`);
 

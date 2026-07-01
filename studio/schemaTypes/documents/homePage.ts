@@ -157,22 +157,57 @@ export const homePage = defineType({
         defineField({ name: "ctaTarget", type: "string" }),
       ],
     }),
-    // 7. Join the list (newsletter)
+    // 7. Join the list (newsletter). `form` holds the sign-up microcopy; the
+    // generic error / "verify" prompts stay in code (system-level). All fields
+    // have in-code fallbacks — blank is safe.
     defineField({
       name: "newsletter",
       type: "object",
       fields: [
         defineField({ name: "title", type: "string" }),
         defineField({ name: "body", type: "text", rows: 2 }),
+        defineField({
+          name: "form",
+          title: "Sign-up form microcopy",
+          type: "object",
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: "buttonLabel", type: "string", initialValue: "Subscribe" }),
+            defineField({ name: "submittingLabel", type: "string", initialValue: "Subscribing…" }),
+            defineField({ name: "placeholder", type: "string", initialValue: "you@example.com" }),
+            defineField({
+              name: "successMessage",
+              type: "text",
+              rows: 2,
+              description: "Shown after sign-up (double opt-in — 'check your inbox').",
+            }),
+          ],
+        }),
       ],
     }),
-    // 8. Connect
+    // 8. Connect. `form` holds the contact-form microcopy (same fallback rule).
     defineField({
       name: "connect",
       type: "object",
       fields: [
         defineField({ name: "title", type: "string" }),
         defineField({ name: "body", type: "text", rows: 2 }),
+        defineField({
+          name: "form",
+          title: "Contact form microcopy",
+          type: "object",
+          options: { collapsible: true, collapsed: true },
+          fields: [
+            defineField({ name: "buttonLabel", type: "string", initialValue: "Send message" }),
+            defineField({ name: "submittingLabel", type: "string", initialValue: "Sending…" }),
+            defineField({
+              name: "successMessage",
+              type: "text",
+              rows: 2,
+              description: "Shown after the message sends.",
+            }),
+          ],
+        }),
       ],
     }),
     defineField({ name: "seo", type: "seo" }),
