@@ -1,79 +1,63 @@
-# Session State — home reframe + launch hardening delivered (next: final production-readiness pass)
+# Session State — CF Sentry bundle fix shipped (next: content→Sanity + copy review)
 
-_Transient handoff. Reflects branch `006-home-reframe` as of 2026-06-24. Durable rules/gotchas live in `CLAUDE.md`._
+_Transient handoff. Reflects `main` @ `3c569b6` as of 2026-07-01. Durable rules/gotchas live in `CLAUDE.md`._
 
 ## Where we are
 
-All six build phases (0–5) shipped earlier. This session delivered a large **post-launch reframe + hardening** pass on branch **`006-home-reframe`** (8 commits, 56 files, +6,149/−3,223). **Pushed, not yet PR'd/merged** (PR is the next step). lint + tsc clean; **both builds green** (Vercel `next build` + `opennextjs-cloudflare build`); Vitest 23/23; Playwright 36 pass / 3 gated (incl. new a11y + theme specs); workerd preview boots 200.
+Both build phases (0–5) + the home reframe (`006`, PR #9) shipped earlier. This session delivered **`007-cf-sentry-bundle-fix`** (PR #10, **merged to main**). **Both prod targets are now green and serving correctly** — the Cloudflare deploy that had been failing since Sentry landed is fixed.
 
-This branch was **not** a numbered build phase — it began as the home **narrative reframe** (driven by Ricki's 6/22 voice notes + chat, captured in `docs/planning/ricki-input/`) and grew to absorb most of the launch-prep carry-over.
+- **Vercel** prod: `main` deploy READY.
+- **Cloudflare** prod: `main` build `success` (Version `fe5873f4…`); all routes 200 incl. `/journal` (was 500). Worker gzip **2486 KiB** (< 3 MiB free limit).
 
-## What `006-home-reframe` actually delivered
+## What `007-cf-sentry-bundle-fix` delivered (PR #10, merged)
 
-**1. Home narrative reframe** (`feat(home)` f358cf5) — the spine now *explains* rather than *converts*:
-- Hero identity → **leadership strategist** (not "founder/facilitator/somatic"); **all booking CTAs removed from home**; only a soft "Follow along" remains.
-- Merged **"The Practice" + "Founded & Led" → one "The Work"** section (`#work`): three arena cards — Exhale, CBV (external links) + **Somatics** (internal). About (`MeetReign`) **moved above** The Work.
-- New **`/somatics`** page — frames the practice as bio and is the **only** page with a booking CTA.
-- Nav + `siteSettings.nav`: `#practice`/`#founded` → `#work`. Retired `PracticeSection`/`FoundedAndLed`; new `components/sections/TheWork.tsx`. Schema: `homePage.theWork` + `somaticsPage` singleton; Studio redeployed.
+The `@sentry/nextjs` **server** SDK (`@sentry/node` + full OpenTelemetry Node auto-instrumentation, ~5.5 MiB raw) pushed the OpenNext Worker to **3.27 MiB gzip — over Cloudflare's 3 MiB free-plan limit**, so every `006`/`main` CF deploy failed `wrangler` size validation. CF prod was frozen on a pre-migration commit whose `/journal` 500'd against the migrated tag data.
 
-**2. Imagery + polish** (c9cfd6c) — AI on-brand abstract card covers for all three arenas (via the entitled Sanity `generate_image`); strictly uniform fixed-height cards; expanded About bio (it had none).
+**Fix — dual-SDK split (no Sentry capability dropped; user chose free + trim over Workers Paid):**
+- Client `@sentry/nextjs` on both targets (unchanged). Server: `@sentry/nextjs` on **Vercel** (Node), `@sentry/cloudflare` on **Cloudflare** (workerd) via `cloudflare/worker.ts` wrapping the OpenNext worker with `withSentry` + re-exporting the Durable Objects.
+- `@sentry/nextjs` tree-shaken out of the CF build: `NEXT_PUBLIC_BUILD_TARGET=cloudflare` (set only on the `opennextjs-cloudflare build` step in package.json) is inlined → Turbopack DCEs the imports. `instrumentation.ts` has no top-level `@sentry/nextjs` import + early-returns on CF; `app/global-error.tsx` imports Sentry dynamically in `useEffect`.
+- `cloudflare/worker.ts` is the wrangler `main` (excluded from app `tsc`). DSN is a public wrangler `var`.
+- **Result: 3268 → 2486 KiB gzip.** Full detail + a **Workers-Paid revert path** in `docs/SENTRY.md`; `CLAUDE.md` has the `007` facts block + a 3 MiB gotcha.
 
-**3. Booking resilience** (c9cfd6c) — `BookingButton` is now a **real link** (progressive enhancement) with a **watchdog fallback**: if the Calendly popup doesn't mount in ~3.5s (ad/privacy blocker or hang) it opens the scheduling page (new tab, or same tab if popup-blocked). The discovery CTA is now `role=link` — E2E selector updated.
+Also this session: **`fix(turnstile)`** `appearance: "interaction-only"` (a reported "auto-approving checkbox" was investigated — **not a bug**; managed-mode auto-pass, server siteverify fails closed, both routes enforce the token — just a UX polish). Swept a large pile of Finder `" 2"`/`" 3"` duplicate dirs (`node_modules/@types/* 2` broke local `tsc` with a phantom `chai 2` type lib).
 
-**4. Site-wide dark mode + section separation** (`feat(theme)` d89252b):
-- Follow-system default + persisted toggle. Pre-paint inline script sets `.dark` on `<html>` (no flash); `ThemeToggle` (nav, desktop+mobile) via `useSyncExternalStore`; `lib/theme.ts`.
-- **Brand-DERIVED dark palette** under `.dark` in `globals.css` (DESIGN.md only specs light) — Earth-Charcoal surfaces, Sand-Stone text, same Forest/Teal accents. **Flagged for Ricki's review.**
-- `Section` gained a `tone` (base/alt/contrast) + a new `band` token (dark in both themes) → fixes the "sections blend" issue.
+## Next phase — `008-content→Sanity` + copy review (scope)
 
-**5. Accessibility** (2363a1f + b1ab848 + e89e021):
-- Visible **input borders** (was a 10%-opacity hairline); **"Follow along"** secondary button uses `primary` (was invisible-on-dark `primary-container`); **luminous-teal focus rings** (forest-green was invisible on dark).
-- `@axe-core/playwright` + `tests/e2e/a11y.spec.ts` — **0 WCAG 2.0/2.1 A/AA violations** across 5 pages × both themes.
-- Lighthouse-only fixes: legal "Last updated" contrast; "Visit site" label-in-name (WCAG 2.5.3); journal cards `h3`→`h2` (heading-order). **Lighthouse a11y = 100** on /, /somatics, /journal.
+**Goal (user's ask):** move as much **static/hardcoded text as possible into Sanity** so Ricki can edit copy in the Studio without code changes / PRs. The *layout* is considered satisfactory — this is a **content-plumbing + copy** phase, not a redesign.
 
-**6. CSP hardening** (b1ab848) — added `upgrade-insecure-requests` + `Cross-Origin-Opener-Policy: same-origin`. Documented why `script-src` keeps `'unsafe-inline'` (a nonce is incompatible with static/ISR caching + App Router inline hydration scripts).
+**Deliverable already produced this session:** `docs/planning/ricki-copy-survey.md` — a **multiple-choice copy survey for Ricki** (grounded in the actual current copy, each question mapped to its Sanity field). **Send it to Ricki; her answers drive the copy edits.** Layout is explicitly out of scope per Ricki's own note.
 
-**7. Sentry — installed, DSN-gated, VERIFIED** (b1ab848 + cde286a):
-- `@sentry/nextjs` v10 + all config files per `docs/SENTRY.md`, privacy-tuned: **no PII, no Session Replay, no logs**; server `includeLocalVariables`; `tunnelRoute: "/monitoring"` (no CSP connect-src change). `app/global-error.tsx`, `instrumentation(.client/.server/.edge)`, `withSentryConfig` (env-driven org/project/token). Server/edge DSN **falls back to `NEXT_PUBLIC_SENTRY_DSN`** so one build var covers all on Cloudflare.
-- **Verified end-to-end**: a real server error reached Sentry Issues (RICKI-REIGN-1), then resolved; temporary `/sentry-example-page` + route created and **deleted** (never committed).
-- **Sentry project:** org `example-1wv`, project `ricki-reign`, DSN `https://03bea0b82197b6f523bbfc36d73506d1@o4511575656497152.ingest.us.sentry.io/4511621914361856` (public).
+**Already in Sanity (don't re-plumb):** `homePage` (hero, about, theWork, whoIsThisFor, guidingQuestions, newsletter, connect), `somaticsPage`, `siteSettings` (nav, social, seo, footerText, wordmark, contactEmail), `business` (Exhale, CBV), `post`/`author`/`tag`. Sections receive this via props from the page fetch — they are already content-driven.
 
-**8. Sanity publish webhook** (e89e021) — `app/api/revalidate` verifies the Sanity HMAC signature (`@sanity/webhook`) then `revalidatePath("/", "layout")`. **Not yet active** (needs `SANITY_REVALIDATE_SECRET` on deploys + registering the webhook in sanity.io/manage). Note: Next 16 changed `revalidateTag` to `(tag, profile)`; we use `revalidatePath`.
+**Still HARDCODED in code (candidates to move — audit for 008):**
+- **Form microcopy** — `components/ui/ContactForm.tsx` + `NewsletterForm.tsx`: button labels ("Send message", "Subscribe"), placeholder ("you@example.com"), and status messages ("Please complete the verification below.", "Thank you — your message is on its way. Ricki will be in touch.", "Almost there — check your inbox…", "Something went wrong. Please try again.", "Network error. Please try again.").
+- **Consent** — `components/analytics/ConsentBanner.tsx` + `CookieSettingsButton.tsx`: the whole banner body + "Cookie settings" label.
+- **Nav/Footer chrome** — `components/layout/Nav.tsx` ("Close/Open menu" aria), `Footer.tsx` (link labels partly static). Note nav labels/wordmark ARE in `siteSettings`.
+- **Journal index** — `app/journal/page.tsx`: the "Journal" title + description string (also used as metadata). `/journal/tag/[tag]` + `[slug]` metadata templates.
+- **Legal** — `app/privacy/page.tsx` (~13 blocks) + `app/terms/page.tsx` (~5): fully hardcoded. **These also need lawyer review** — consider a `legalPage` doc (Portable Text) so edits don't need PRs, but treat legal text as sensitive (don't casually reword).
+- **Fallbacks** — `app/global-error.tsx` copy, `not-found` copy, SEO/OG defaults in `lib/env.ts`/`layout.tsx`.
 
-**9. Tags → reference doc type** (e89e021) — new `tag` document (title + URL-safe slug); `post.tags` is now references (no-code management). Migrated the 3 existing tags + both posts. Queries expand refs (`tags[]->{title, slug}`), `POSTS_BY_TAG_QUERY` matches `$tagSlug` (not reserved `$tag`); removed the string `TagInput`/`postTags`/`lib/tags`; sitemap adds `/somatics`. Schema + Studio redeployed.
+**Suggested approach for 008 (plan-first, get sign-off):** extend `siteSettings` with a `microcopy`/`forms`/`consent` group (or a dedicated `uiStrings` singleton) for global strings; add a `journalPage` singleton for the index intro; consider a `legalPage` doc type for privacy/terms. Keep the default-or-Sanity pattern (sensible in-code fallbacks so a missing field never breaks the build — same rule as `lib/env.ts`). Add fields incrementally; `cd studio && npm run schema:deploy && npx sanity deploy` after schema changes; migrate existing strings as content; verify both builds.
 
-**10. Maintenance** — `npm audit fix` evaluated and **reverted** (no benefit; tooling-only transitive advisories, big lockfile churn). `.gitignore` broadened to `/.open-next*`, `/playwright-report*`, `/test-results*` after Finder-style " 2" duplicate dirs leaked a Brevo key into a commit (caught by GitHub push protection — nothing reached the remote).
+## Missing action items review (found this session)
 
-## Deploy-env status (set this session)
+- **⚠️ Identity inconsistency (live copy bug):** the reframe made the identity **"leadership strategist,"** but `siteSettings.footerText` = _"© Ricki Reign. Founder, facilitator, and organizational leader."_ and `siteSettings.seo.title` = _"Ricki Reign — Founder, Facilitator & Organizational Leader"_ still use the OLD identity. Reconcile in 008 (Survey Q3 asks Ricki which she prefers). Editable in Studio today — no code change needed.
+- **Sentry CF source maps** not uploading (CF build logs "No auth token provided"): `SENTRY_AUTH_TOKEN` must be a Workers-Builds **build** var for CF map upload. Also the wrangler deploy wipes remote runtime `SENTRY_ORG`/`SENTRY_PROJECT` (harmless — build-time-only).
+- **Verify Sentry error-capture in prod:** the `@sentry/cloudflare` wrapper is deployed + DSN bound, but a real triggered-error → Issues test on workerd is still pending (and the Vercel `@sentry/nextjs` path).
 
-- **Vercel** (project `rickireign`): added `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_ORG=example-1wv`, `SENTRY_PROJECT=ricki-reign` (Production + `006-home-reframe` preview) via CLI; **user added `SENTRY_AUTH_TOKEN`** (Production + preview, `--sensitive`). Plus the existing Brevo/Turnstile/Calendly/GA/Sanity from Phase 3.
-- **Cloudflare** (Worker `rickireign`): **user added** all four Sentry vars as **Workers-Builds *build* vars** (DSN/org/project plaintext, `SENTRY_AUTH_TOKEN` as Secret). Plus the existing runtime secrets.
-- **`.env.local`**: **user added all 4 Sentry values**. ⚠️ This means **local dev now reports to Sentry** (DSN active). If dev noise is unwanted, comment out `NEXT_PUBLIC_SENTRY_DSN` in `.env.local` (the dormant-in-dev design); `SENTRY_ORG`/`PROJECT` are build-time only and harmless.
+## Launch-prep carry-over (restate until done)
 
-## Next phase — final production-readiness pass (scope)
+Verify Sentry in prod (trigger error + CF source maps + `/monitoring` tunnel under workerd) · **activate the Sanity publish webhook** (`SANITY_REVALIDATE_SECRET` on both deploys + register the hook at sanity.io/manage) · **domain cutover** (apex still serves the OLD site) · **Brevo `rickireign.com` domain sender** · **lawyer review** of `/privacy` + `/terms` (+ an error-monitoring line) · Ricki to review **copy (survey above) + brand-derived dark palette + AI card images** · optional **performance** pass (Turnstile widgets dominate Lighthouse) · Session Replay decision (off).
 
-1. **Open PR + merge `006-home-reframe` → main**, then **deploy both targets** and smoke-verify.
-2. **Verify Sentry in PROD**: deploy, trigger an error, confirm it appears in Issues, confirm **source maps upload** on build (auth token), confirm the **`/monitoring` tunnel** works under workerd.
-3. **Activate the Sanity publish webhook**: set `SANITY_REVALIDATE_SECRET` (Vercel + Cloudflare + `.env.local`) and register the webhook (sanity.io/manage → API → Webhooks → `https://<site>/api/revalidate`, same secret, trigger create/update/delete).
-4. **Domain cutover** — apex still serves the OLD site; deploys/Studio point at `*.vercel.app`.
-5. **Brevo `rickireign.com` domain sender** (DOI + contact still use the gmail wrapper).
-6. **Lawyer review** of `/privacy` + `/terms` — now also needs an **error-monitoring** line (Sentry) and confirm cookie language.
-7. **Ricki review**: final copy (hero/The Work/somatics drafts in Studio) + the **dark palette** (brand-derived, unreviewed) + the AI card images.
-8. **Optional**: a **performance** pass (Lighthouse perf 54–74 — the two Turnstile widgets are the main cost; consider lazy-loading them on interaction); **Session Replay** decision (off now).
+## Gotchas (phase-specific — full set in CLAUDE.md)
 
-## Phase-specific gotchas (don't re-learn)
-
-- **Dark mode:** plain `.dark { --color-* }` (unlayered) overrides the `@theme` tokens, so the whole site flips with no per-component `dark:` classes. `inverse-surface`/`inverse-on-surface` are **deliberately NOT flipped** (footer stays a dark band). `primary` → light green in dark (so outline button + nav hover stay visible); filled `primary-container`/`on-primary` buttons + the `*-fixed` pairs are left theme-invariant. Anti-FOUC inline script in `<head>` + `suppressHydrationWarning` on `<html>`. `ThemeToggle` uses `useSyncExternalStore` (avoids React 19 set-state-in-effect lint).
-- **Sentry:** Turbopack `next build` AND OpenNext both build fine with v10; workerd boots with it present. Get the DSN via the Sentry MCP `find_dsns` (org `example-1wv`). The verify path: a temporary `/sentry-example-page` + `/api/sentry-example-api` (server `throw`) — delete after.
-- **Booking CTA is now `role=link`**, not button — any new test must use `getByRole("link", { name: /discovery call/i })`.
-- **Tags:** deterministic ids `tag-<slug>`; publish tag docs **before** repointing posts (reference order). `POSTS_BY_TAG_QUERY` param is `$tagSlug`.
-- **Commit messages with backticks get shell-mangled** by zsh → always `git commit -F <file>` for multi-line messages.
-- **Finder " 2" duplicate dirs** (`.open-next 2`, `playwright-report 2`, …) dodge anchored gitignore and can leak secrets — the globs now catch them; delete any you see.
-- **Lighthouse needs the prod build** (`next start`), not dev. Dev's HMR websocket means `waitUntil: "networkidle"` never settles — use `domcontentloaded` in headless checks.
-
-## Open questions / carry-over (restate until done)
-
-- Activate webhook + verify Sentry in prod (above). Domain cutover. Brevo domain sender. Lawyer review (+ error-monitoring line). Ricki's copy + dark-palette + AI-image review. Performance pass. Session Replay decision. Calendly is still the personal account (`gregorioe-moreta/discovery-call`).
+- **CF Worker size = 3 MiB gzip (free).** Only a real deploy enforces it; `build`/`preview` don't. Check: `npx wrangler deploy --dry-run --outdir /tmp/x` → "gzip: …". Current headroom ~586 KiB — adding heavy deps can breach it again (see `docs/SENTRY.md` for the paid-plan escape hatch).
+- **Two Sentry server SDKs by target** — don't "consolidate" them back to one without re-checking the CF size limit.
+- Schema changes need `cd studio && npm run schema:deploy` **and** `npx sanity deploy` (hosted Studio at rickireign.sanity.studio).
+- New E2E specs `import { test } from "./fixtures"` (pre-seeds consent). `test:e2e` reuses an existing `:3000` server — kill any stale `next dev` first or the console-error spec fails on dev-mode eval-vs-CSP (that's an artifact, not a regression).
+- Booking CTA is `role=link`. Commit multi-line messages with `git commit -F` (backticks get shell-mangled).
+- **Sanity content is shared/global** across prod + the live old site — a schema/content migration affects both; publish referenced docs before repointing (reference order).
 
 ## If you're starting cold
 
-- All work is on `006-home-reframe` (pushed). Run `npm test` + `npm run test:e2e` before touching forms/nav/journal/theme. Schema changes need `cd studio && npm run schema:deploy` + `npx sanity deploy`. Never delete branches. Run git/gh/deploy from the main session. See `CLAUDE.md` for the full rule set + all phase gotchas.
+`main` @ `3c569b6` is green on both targets. **Cut `008-content-to-sanity` off main and push immediately** (per the user: the branch is started in the NEXT/fresh session, not the one that wrote this). Plan-first: present the 008 plan (which strings → which Sanity fields) and get sign-off BEFORE code. Send `docs/planning/ricki-copy-survey.md` to Ricki; her answers shape the copy edits. Run `npm test` + `npm run test:e2e` before touching forms/nav/journal/theme. Never delete branches; git/deploy from the main session. See `CLAUDE.md` for the full rule set.
