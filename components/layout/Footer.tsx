@@ -30,9 +30,10 @@ interface FooterProps {
   wordmark?: string;
   social?: SocialLink[];
   footerText?: string;
+  cookieSettingsLabel?: string;
 }
 
-export function Footer({ wordmark, social, footerText }: FooterProps) {
+export function Footer({ wordmark, social, footerText, cookieSettingsLabel }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -71,6 +72,7 @@ export function Footer({ wordmark, social, footerText }: FooterProps) {
               <li>
                 <CookieSettingsButton
                   className={cn(linkClasses, "cursor-pointer")}
+                  label={cookieSettingsLabel}
                 />
               </li>
             </ul>

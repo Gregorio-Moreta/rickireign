@@ -11,23 +11,31 @@ import { SITE_SETTINGS_QUERY } from "@/lib/sanity/queries";
 import type { SiteSettings } from "@/lib/sanity/types";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: "Ricki Reign — Founder, Facilitator & Organizational Leader",
-    template: "%s — Ricki Reign",
-  },
-  description:
-    "Ricki Reign bridges ancestral wisdom with modern leadership through somatic and organizational work. Follow her, and find the way to work together.",
-  metadataBase: new URL("https://rickireign.com"),
-  openGraph: {
-    title: "Ricki Reign — Founder, Facilitator & Organizational Leader",
-    description:
-      "Ricki Reign bridges ancestral wisdom with modern leadership through somatic and organizational work.",
-    url: "https://rickireign.com",
-    siteName: "Ricki Reign",
-    type: "website",
-  },
-};
+// Default site SEO. The title/description come from Sanity `siteSettings.seo`
+// (editable in the Studio) with these in-code strings as fallbacks so a blank
+// field never changes the wording. `%s` template + metadataBase stay structural.
+const FALLBACK_TITLE = "Ricki Reign — Founder, Facilitator & Organizational Leader";
+const FALLBACK_DESCRIPTION =
+  "Ricki Reign bridges ancestral wisdom with modern leadership through somatic and organizational work. Follow her, and find the way to work together.";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await sanityFetch<SiteSettings>(SITE_SETTINGS_QUERY);
+  const title = settings?.seo?.title || FALLBACK_TITLE;
+  const description = settings?.seo?.description || FALLBACK_DESCRIPTION;
+
+  return {
+    title: { default: title, template: "%s — Ricki Reign" },
+    description,
+    metadataBase: new URL("https://rickireign.com"),
+    openGraph: {
+      title,
+      description,
+      url: "https://rickireign.com",
+      siteName: "Ricki Reign",
+      type: "website",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -70,8 +78,9 @@ export default async function RootLayout({
           wordmark={settings?.wordmark}
           social={settings?.social}
           footerText={settings?.footerText}
+          cookieSettingsLabel={settings?.consent?.cookieSettingsLabel}
         />
-        <ConsentBanner />
+        <ConsentBanner copy={settings?.consent} />
         <Analytics />
       </body>
     </html>

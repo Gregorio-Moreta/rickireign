@@ -2,7 +2,7 @@ import { Section } from "@/components/layout/Section";
 import { Container } from "@/components/layout/Container";
 import { ContactForm } from "@/components/ui/ContactForm";
 import { SocialLinks } from "@/components/ui/SocialLinks";
-import type { SimpleSection, SocialLink } from "@/lib/sanity/types";
+import type { ConnectSection, SocialLink } from "@/lib/sanity/types";
 
 /**
  * Section 8 — Connect. The contact form (Zod + Turnstile + Brevo transactional)
@@ -14,7 +14,7 @@ export function Connect({
   social,
   contactEmail,
 }: {
-  data: SimpleSection | undefined;
+  data: ConnectSection | undefined;
   social: SocialLink[] | undefined;
   contactEmail: string | undefined;
 }) {
@@ -35,7 +35,7 @@ export function Connect({
             </p>
           ) : null}
 
-          <ContactForm />
+          <ContactForm copy={data.form} />
 
           <div className="mt-2 flex flex-col items-center gap-4">
             {contactEmail ? (

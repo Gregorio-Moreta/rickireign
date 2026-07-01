@@ -7,10 +7,16 @@ import { reopenConsent } from "@/lib/consent";
  * withdraw their cookie choice at any time (GDPR: withdrawal must be as easy as
  * giving consent). Styled to match the surrounding footer links.
  */
-export function CookieSettingsButton({ className }: { className?: string }) {
+export function CookieSettingsButton({
+  className,
+  label,
+}: {
+  className?: string;
+  label?: string;
+}) {
   return (
     <button type="button" onClick={reopenConsent} className={className}>
-      Cookie settings
+      {label || "Cookie settings"}
     </button>
   );
 }

@@ -9,6 +9,16 @@ import {
   readConsent,
   writeConsent,
 } from "@/lib/consent";
+import type { ConsentCopy } from "@/lib/sanity/types";
+
+// Editorial copy from Sanity (siteSettings.consent) with in-code fallbacks. The
+// "See our Privacy Policy" link is appended structurally below, not stored.
+const FALLBACK = {
+  title: "A note on cookies",
+  body: "We use cookies to understand how the site is used. Analytics stays off until you accept — you can change this anytime via “Cookie settings” in the footer.",
+  acceptLabel: "Accept",
+  declineLabel: "Decline",
+} as const;
 
 /**
  * Cookie consent — a centered modal (global opt-in). GA never loads before
@@ -22,9 +32,13 @@ import {
  * nothing on the server / first paint (consent lives in a client cookie) to
  * avoid a hydration mismatch.
  */
-export function ConsentBanner() {
+export function ConsentBanner({ copy }: { copy?: ConsentCopy }) {
   const [visible, setVisible] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const title = copy?.title || FALLBACK.title;
+  const body = copy?.body || FALLBACK.body;
+  const acceptLabel = copy?.acceptLabel || FALLBACK.acceptLabel;
+  const declineLabel = copy?.declineLabel || FALLBACK.declineLabel;
 
   useEffect(() => {
     const sync = () => setVisible(readConsent() === null);
@@ -98,15 +112,13 @@ export function ConsentBanner() {
           id="consent-title"
           className="font-display text-headline-md text-on-surface"
         >
-          A note on cookies
+          {title}
         </h2>
         <p
           id="consent-body"
           className="mt-3 font-sans text-body-md text-on-surface-variant text-pretty"
         >
-          We use cookies to understand how the site is used. Analytics stays off
-          until you accept — you can change this anytime via &ldquo;Cookie
-          settings&rdquo; in the footer. See our{" "}
+          {body} See our{" "}
           <Link
             href="/privacy"
             className="text-secondary underline underline-offset-4 hover:text-luminous-teal"
@@ -122,14 +134,14 @@ export function ConsentBanner() {
             onClick={() => choose("denied")}
             className="w-full px-6 py-2.5 sm:w-auto"
           >
-            Decline
+            {declineLabel}
           </Button>
           <Button
             variant="primary"
             onClick={() => choose("granted")}
             className="w-full px-6 py-2.5 sm:w-auto"
           >
-            Accept
+            {acceptLabel}
           </Button>
         </div>
       </div>
