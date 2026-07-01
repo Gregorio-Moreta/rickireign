@@ -1,12 +1,13 @@
 # Session State — content→Sanity (008) shipped; awaiting Ricki's survey + merge
 
-_Transient handoff. Reflects `008-content-to-sanity` @ `06aa1d6` (branch off `main` @ `9ddc93f`) as of 2026-07-01. Durable rules/gotchas live in `CLAUDE.md`._
+_Transient handoff. Reflects `008-content-to-sanity` (PR #11, branch off `main` @ `9ddc93f`) as of 2026-07-01. Durable rules/gotchas live in `CLAUDE.md`._
 
 ## Where we are
 
 `007-cf-sentry-bundle-fix` (PR #10) is merged; both prod targets are green on `main`. This session delivered **`008-content-to-sanity`** — moving remaining hardcoded editorial copy into Sanity so Ricki can edit it in the Studio without code changes. **PR is open, NOT merged** — awaiting the human's sign-off (and, ideally, Ricki's survey answers so the copy edits land in the same review window).
 
-- **Branch:** `008-content-to-sanity` @ `06aa1d6`, pushed. One feature commit + this handoff commit.
+- **Branch:** `008-content-to-sanity`, pushed (PR #11). Feature commit + handoff commit + this webhook-progress commit. **Both CI checks were green** on the pushed head (Vercel ✓, Workers Builds ✓) — the `worker.ts` local build quirk below does NOT affect CI.
+- **Also this session:** began the **publish-webhook** launch-prep item — secrets set on both deploys, hooks pending manual registration (see the dedicated section below).
 - **Verified locally (all green):** `npm run lint`, `npx tsc --noEmit`, `npm test` (23/23), `npm run test:e2e` (36 passed, 3 live-form specs self-skip), `npm run build` (Vercel), `npx opennextjs-cloudflare build` → **CF Worker gzip 2487.09 KiB** (was 2486; +1 KiB from content plumbing; ~585 KiB under the 3 MiB free limit).
 
 ## What `008-content-to-sanity` delivered (PR open)
@@ -50,12 +51,32 @@ _Transient handoff. Reflects `008-content-to-sanity` @ `06aa1d6` (branch off `ma
 
 ## Deploy-env status
 
-Unchanged from 007. No new env vars, no new CSP origins, no new dependencies this phase (pure content plumbing + props). Sanity `production` dataset is shared with the live old site — the seeded strings are already live there via the 60s ISR window.
+The **008 code** added no CSP origins and no dependencies (pure content plumbing + props). One **new secret** was set during the webhook work this session: **`SANITY_REVALIDATE_SECRET`** — live on **Cloudflare** (Worker secret) + set on **Vercel Production** (pending the next deploy) + `.env.local` (see the "Publish webhook" section). Sanity `production` dataset is shared with the live old site — the seeded strings are already live there via the 60s ISR window.
+
+## Publish webhook — HALF-ACTIVATED this session (finish it)
+
+Started the launch-prep "activate the Sanity publish webhook" item; **secrets are set, the two hooks are not yet registered.**
+
+**Done:**
+- `SANITY_REVALIDATE_SECRET` generated (a 64-char hex; the value lives in `.env.local` (gitignored) + both deploys' secret stores).
+- **Cloudflare** Worker: set via `wrangler secret put SANITY_REVALIDATE_SECRET` (account `gregoriomoreta4@gmail.com`) — **live on the Worker now** (encrypted secret; survives the wrangler.jsonc deploy).
+- **Vercel**: added as a **Production** env var (Encrypted) via `vercel env add`. ⚠️ Env vars only apply to **new** deployments, so the *current* prod deployment doesn't have it yet — **the user chose to let the 008 merge trigger the redeploy** that makes it live (or any future `vercel --prod`). Until then the Vercel `/api/revalidate` fails-closed (500).
+- `.env.local` + `.env.example` both carry the var (example was already there from 006).
+
+**Still TODO (manual, browser — the user is handling it):** register **2 GROQ-powered webhooks** at **sanity.io/manage → project `zsuyhr45` → API → Webhooks**. Can't be scripted: the Sanity CLI `hooks create` now only *opens the manage UI*, and the legacy `/hooks/projects` REST API rejects `secret`/`filter`/`httpMethod` and its hooks don't emit the `sanity-webhook-signature` that `@sanity/webhook` (used by `app/api/revalidate`) verifies. Values for **both** hooks (identical but the URL):
+  - **URLs:** `https://rickireign.vercel.app/api/revalidate` and `https://rickireign.gregoriomoreta4.workers.dev/api/revalidate`
+  - Dataset `production` · Trigger **Create/Update/Delete** · Filter `!(_id in path("drafts.**"))` · Projection empty · Method `POST` · API version default (`v2021-06-07`) · **Secret** = the shared value (see `.env.local`) · Drafts off.
+  - **Verify:** `cd studio && npx sanity hooks logs <name>` (or the manage UI "Attempts" tab), or publish a trivial Studio edit → expect a **200**. The CF hook works immediately; the Vercel hook works once its prod redeploy lands.
 
 ## Launch-prep carry-over (restate until done)
 
-Verify Sentry in prod (trigger error + CF source maps + `/monitoring` tunnel under workerd) · **activate the Sanity publish webhook** (`SANITY_REVALIDATE_SECRET` on both deploys + register the hook at sanity.io/manage) · **domain cutover** (apex still serves the OLD site) · **Brevo `rickireign.com` domain sender** · **lawyer review** of `/privacy` + `/terms` · Ricki to review **copy (survey → `ricki-copy-survey.docx`) + brand-derived dark palette + AI card images** · optional **performance** pass (Turnstile).
+**Sentry in prod** — trigger a real error on both targets → confirm it lands in Issues; also CF **source maps** aren't uploading (needs `SENTRY_AUTH_TOKEN` as a Workers-Builds **build** var) + verify the `/monitoring` tunnel under workerd · **finish the publish webhook** (secrets done — register the 2 hooks + let the Vercel redeploy land; see section above) · **domain cutover** (apex `rickireign.com` still serves the OLD site) · **Brevo `rickireign.com` domain sender** (verify SPF/DKIM so mail isn't from the gmail) · **lawyer review** of `/privacy` + `/terms` (+ an error-monitoring line) · **Ricki to review** copy (survey → `docs/planning/ricki-copy-survey.docx`) + the brand-derived **dark palette** + the **AI card images** · optional **performance** pass (the two Turnstile widgets dominate Lighthouse) · **Session Replay** decision (currently off).
 
 ## If you're starting cold
 
-`008-content-to-sanity` @ `06aa1d6` is pushed with an open PR; **do not merge without the human**. If asked to continue: sync `main`, read this file + `CLAUDE.md`, and either (a) apply Ricki's survey answers in the Studio when they arrive, or (b) pick a launch-prep item — **plan-first, get sign-off before code**, then cut `NNN-next` off `main` and push immediately. Never delete branches; git/deploy from the main session. **Run `npx opennextjs-cloudflare build` before trusting a local `tsc`/`next build`** (see gotcha).
+`008-content-to-sanity` (PR #11) is pushed; **do not merge without the human**. If asked to continue, sync `main`, read this file + `CLAUDE.md`, and pick up one of:
+- (a) **apply Ricki's survey answers** in the Studio when they arrive (mostly no-code; `docs/planning/ricki-copy-survey.docx`);
+- (b) **finish the publish webhook** — the 2 hooks are being registered by the user in sanity.io/manage; once they exist (and the 008 merge has redeployed Vercel), verify with `sanity hooks logs` / a test publish (see "Publish webhook" section for exact values);
+- (c) another **launch-prep** item (Sentry prod verify + CF source maps, domain cutover, Brevo domain sender, lawyer review, perf pass).
+
+**Plan-first, get sign-off before code**, then cut `NNN-next` off `main` and push immediately. Never delete branches; git/deploy from the main session. **Run `npx opennextjs-cloudflare build` before trusting a local `tsc`/`next build`** (see gotcha).
