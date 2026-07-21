@@ -118,6 +118,8 @@ export interface SomaticsPage {
   offerings?: Offering[];
   portrait?: SanityImage;
   ctaLabel?: string;
+  /** When true the CTA opens the Calendly popup, whatever `ctaLabel` says. */
+  booking?: boolean;
   ctaTarget?: string;
   seo?: Seo;
 }

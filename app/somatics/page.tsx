@@ -39,8 +39,17 @@ export default async function SomaticsPage() {
   const page = await sanityFetch<SomaticsPage>(SOMATICS_PAGE_QUERY);
   if (!page) return null;
 
-  const { label, title, intro, body, offerings, portrait, ctaLabel, ctaTarget } =
-    page;
+  const {
+    label,
+    title,
+    intro,
+    body,
+    offerings,
+    portrait,
+    ctaLabel,
+    booking,
+    ctaTarget,
+  } = page;
   const hasBody = Array.isArray(body) && body.length > 0;
   const items = (offerings ?? []).filter((o) => o.title);
   const showPortrait = hasImageAsset(portrait);
@@ -114,6 +123,7 @@ export default async function SomaticsPage() {
               label={ctaLabel}
               target={ctaTarget || "/#connect"}
               style="primary"
+              booking={booking}
             />
           </div>
         ) : null}
