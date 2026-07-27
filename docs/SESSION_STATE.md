@@ -1,82 +1,67 @@
-# Session State — content→Sanity (008) shipped; awaiting Ricki's survey + merge
+# Session State — 009 Ricki copy edits applied; next = launch prep
 
-_Transient handoff. Reflects `008-content-to-sanity` (PR #11, branch off `main` @ `9ddc93f`) as of 2026-07-01. Durable rules/gotchas live in `CLAUDE.md`._
+_Transient handoff. Reflects `009-ricki-copy-edits` (branch off `main` @ `34be7fc`) as of 2026-07-21. Durable rules/gotchas live in `CLAUDE.md`._
 
 ## Where we are
 
-`007-cf-sentry-bundle-fix` (PR #10) is merged; both prod targets are green on `main`. This session delivered **`008-content-to-sanity`** — moving remaining hardcoded editorial copy into Sanity so Ricki can edit it in the Studio without code changes. **PR is open, NOT merged** — awaiting the human's sign-off (and, ideally, Ricki's survey answers so the copy edits land in the same review window).
+`008-content-to-sanity` (PR #11) is **merged**. This session delivered **`009-ricki-copy-edits`** — applying Ricki's returned copy survey (`docs/planning/ricki-copy-survey-response.pdf`, now committed). All six build phases plus 006–009 are done. **Next: launch prep** — no copy work is blocked on us; the remaining copy is Ricki's to write.
 
-- **Branch:** `008-content-to-sanity`, pushed (PR #11). Feature commit + handoff commit + this webhook-progress commit. **Both CI checks were green** on the pushed head (Vercel ✓, Workers Builds ✓) — the `worker.ts` local build quirk below does NOT affect CI.
-- **Also this session:** began the **publish-webhook** launch-prep item — secrets set on both deploys, hooks pending manual registration (see the dedicated section below).
-- **Verified locally (all green):** `npm run lint`, `npx tsc --noEmit`, `npm test` (23/23), `npm run test:e2e` (36 passed, 3 live-form specs self-skip), `npm run build` (Vercel), `npx opennextjs-cloudflare build` → **CF Worker gzip 2487.09 KiB** (was 2486; +1 KiB from content plumbing; ~585 KiB under the 3 MiB free limit).
+- **Branch:** `009-ricki-copy-edits`, pushed. **Content is already LIVE** (published to Sanity `production`, 60s ISR) — the code PR only carries the booking rewire + doc updates.
+- **Verified locally (all green):** `npm run lint`, `npx tsc --noEmit`, `npm test` (23/23), Playwright vs `next start` (**36 passed**, 3 live-form specs self-skip), Playwright vs CF workerd (**36 passed**), CF Worker **gzip 2487.19 KiB** (identical to the 008 baseline; ~585 KiB under the 3 MiB free limit).
 
-## What `008-content-to-sanity` delivered (PR open)
+## What shipped
 
-**Goal:** move as much static/hardcoded editorial copy into Sanity as possible so Ricki edits it in the Studio (no PRs). Kept the **default-or-Sanity fallback** rule (every consumer keeps its current string as an in-code fallback → a blank field never breaks a build) and **token-less SSR** (strings thread as props from Server Components — no client fetch, no write token).
+**Content (Sanity, already live — no deploy needed).** Every edit traces to a marked survey answer; nothing was "improved" beyond what she marked.
 
-**Schema (deployed via `schema:deploy`; hosted Studio redeployed):**
-- `siteSettings.consent` — cookie-modal `title` / `body` / `acceptLabel` / `declineLabel` / `cookieSettingsLabel` (Studio field-group).
-- `homePage.newsletter.form` + `homePage.connect.form` — `buttonLabel` / `submittingLabel` / `placeholder` (newsletter only) / `successMessage`.
-- **New `journalPage` singleton** (`studio/schemaTypes/documents/journalPage.ts`, registered in `index.ts` + `structure.ts`) — `eyebrow` / `heading` / `intro` / `emptyState` + `seo`.
+| Area | Change |
+|---|---|
+| Identity (Q1/Q3) | **"Community Facilitator and Strategist"** in `hero.subheading`, `siteSettings.footerText`, `siteSettings.seo.title` |
+| About (Q6/Q7/Q15) | Title → "Where the work comes from."; **pull-quote dropped**; 4 paragraphs given a *light* pass (ancestral/lineage + "regulated nervous system" out) |
+| The Work (Q8/Q14) | Section + nav → **"Work with Reign"** (anchor stays `#work`); cards retitled **Embodiment Practices / Leadership and Organizational Development / Community Education**, business name demoted to the tagline |
+| Who is this for? (Q12) | **Removed** — `homePage.whoIsThisFor` unset |
+| Newsletter (Q10) | Her words: "Join the community to learn more" / "Receive occasional events and updates." |
+| Connect (Q14) | Section heading → **"Send a Message"**; nav tab still "Connect" |
+| Somatics (Q9) | Button → **"Schedule a Conversation"**, `booking: true` |
+| Hero (Q15) | Current-focus item → "Writing on leadership and presence" |
 
-**Seeded + published** all new fields with the existing copy (`siteSettings`, `homePage`, `journalPage`) via the Sanity MCP — the live site reads the same strings it had, now editable.
+**Code — the only thing that needed it (Q9).** The Calendly popup was wired by matching the literal text `/discovery call/i`, so her softer label would have silently downgraded the button to a plain `#connect` link.
+- `somaticsPage.booking` boolean (schema **deployed**, hosted Studio **redeployed**) → `SOMATICS_PAGE_QUERY` → `SomaticsPage.booking` → `CtaButton booking` prop → `app/somatics/page.tsx`.
+- `CtaButton` resolves `booking ?? isBookingCta(label)` — **the label match stays as the fallback**, so any un-migrated CTA behaves as before.
+- `Nav.tsx` `FALLBACK_LINKS` label → "Work with Reign"; `tests/e2e/calendly.spec.ts` retargeted to the new label.
+- Verified by curl: the renamed button still renders as a real `href="https://calendly.com/…/discovery-call"` anchor.
 
-**App wiring:**
-- Threaded consent + form microcopy as props: `layout.tsx` → `ConsentBanner` (`copy`) + `Footer` (`cookieSettingsLabel`) → `CookieSettingsButton`; `Newsletter`/`Connect` sections → `NewsletterForm`/`ContactForm` (`copy`). New types in `lib/sanity/types.ts` (`ConsentCopy`, `NewsletterFormCopy`, `ContactFormCopy`, `NewsletterSection`, `ConnectSection`, `JournalPage`).
-- `app/journal/page.tsx` reads `journalPage` for the header body **and** `generateMetadata`.
-- `app/layout.tsx`: **`siteSettings.seo` now drives the browser/OG title + description via `generateMetadata`** (was a hardcoded static `metadata` object that never read Sanity). This is the fix for the SEO half of the identity bug — but see below: **wording is unchanged pending Ricki.**
-- `lib/sanity/queries.ts`: `SITE_SETTINGS_QUERY` gains `consent`; new `JOURNAL_PAGE_QUERY`. (`HOME_PAGE_QUERY` already selects whole `newsletter`/`connect` objects, so `form` came for free.)
+## Deliberate, do NOT "fix"
 
-**Deliverable for Ricki:** `docs/planning/ricki-copy-survey.docx` — a clean, fillable Word version of the copy survey (15 questions, ballot-box options + fill-in lines, each tagged with where it lives on the site). Sent to the user to forward to Ricki; her marked-up return drives the copy edits (mostly no-code Studio edits now that the plumbing exists).
+- **`business.name` no longer holds the business's name** — it holds the arena label ("Community Education"), and `business.tagline` holds the name ("Community Birth Village"). That's the display field; it's intentional.
+- **`WhoIsThisFor.tsx` + its `app/page.tsx` call are dead-but-kept** so the section is restorable from the Studio with no deploy. Not dead code to delete.
+- **"Ancestral Remembering" still exists on `/somatics`** (offering title + "lineage" in the body) while "ancestral" is stripped from the home page. She said those service titles are hers to rewrite. Known temporary inconsistency.
 
-**Deliberately OUT of scope (unchanged):**
-- **Identity WORDING** — decision was "wait for Ricki" (Survey Q3). The SEO field is now wired, but the Sanity value + the in-code fallback both keep the CURRENT text, so nothing visibly changed. `siteSettings.footerText` + `siteSettings.seo.title` still say the OLD "Founder, facilitator & organizational leader" — flip in the Studio once Ricki answers (no code).
-- **Legal pages** (`/privacy`, `/terms`) — stay hardcoded. They need a lawyer, not Ricki; migrating the nested legal HTML to Portable Text is lossy. No `legalPage` doc type.
-- **`app/global-error.tsx` + not-found** — safety-net fallbacks; must not depend on a Sanity fetch, so stay in code.
-- **Nav "Open/Close menu" aria + footer link labels** — structural, not editorial.
-- **System-level form errors** ("Something went wrong", "Network error", the verification prompt) — stay in code by design (Ricki won't tune them).
+## Owed by Ricki (send these back to her)
 
-## Next phase — options (get the human's pick; plan-first)
+1. **New Somatics service titles** — she said the three offerings "are services and they will change… I would have to update with current services." Blocks resolving the ancestral inconsistency above.
+2. **Her own About bio** — the current text is a light pass, not final ("I will likely write it myself once the website is complete").
+3. **Guiding questions** — kept as-is per Q11; she'll rewrite (one still says "lineage").
+4. **Hero headline** (Q2) — she marked nothing, so "Lead from steadiness." stands. Confirm.
+5. **Testimonials for Somatics** (Q14: "Curious about where I could add a link for testimonials!") — needs a design decision + schema.
+6. **Newsletter inside Connect** (Q14) — a layout change; parked, since she opened with "the layout is settled."
+7. **Business links** — Exhale and CBV have no `externalUrl`, so their "Visit site" buttons currently go nowhere.
+8. `hero.currentFocus` still says "Somatic leadership intensives", which blends the two things she wants separated.
 
-1. **Apply Ricki's survey answers** (likely the immediate next step once she replies) — mostly Studio edits; only becomes a code phase if she wants new sections/fields. If Q3 says "leadership strategist everywhere," flip `footerText` + `seo.title` in the Studio (no code).
-2. **Launch-prep** carry-over (see below) — activate the publish webhook, domain cutover, Brevo domain sender, lawyer review, prod Sentry verification.
-3. Optional **performance** pass (Turnstile widgets dominate Lighthouse).
+She also noted she is "very particular about website copy… and likely update sections quarterly" — everything above is a no-code Studio edit at https://rickireign.sanity.studio.
 
-## Gotchas discovered this session (add to the canon)
+## Gotchas discovered this session (now in CLAUDE.md)
 
-- **⚠️ Local `tsc` / `next build` fail on `cloudflare/worker.ts` when `.open-next/worker.js` is ABSENT.** The tsconfig `exclude` of `cloudflare/worker.ts` does **not** actually keep it out of the local `tsc`/`next build` program (reproduced identically on clean `main`) — the build only passes when a real `.open-next/worker.js` exists (from a prior `opennextjs-cloudflare build`). So a fresh clone, or a tree right after `rm -rf .open-next`, will red-herring-fail `tsc`/`next build` on a missing-module error at `cloudflare/worker.ts:8`. **Fix: run `npx opennextjs-cloudflare build` first** (generates `.open-next/worker.js`), then `tsc`/`next build` pass. This corrects the 007 note that implied the exclude prevents the type-check — it doesn't; the file's presence is what matters. (Vercel/CI are green because their build flow has the artifact / doesn't hit this ordering.) To measure CF size from a clean tree you can temporarily set `typescript.ignoreBuildErrors` in `next.config.ts`, run the CF build, then revert (that leaves a real `.open-next` so subsequent `tsc`/`next build` pass).
-- **`opennextjs-cloudflare build` cleans `.open-next` before running `next build`** — so you can't pre-seed a stub worker to dodge the above; the CF build regenerates the real one at the end.
-- Schema changes still need `cd studio && npm run schema:deploy` **and** `npx sanity deploy` (both done this session).
-- **Docx generation:** no `pandoc`/`python-docx` on the machine; used a scratch venv (`python3 -m venv` + `pip install python-docx`) — `pip3 install` alone is blocked by PEP 668.
-
-## Deploy-env status
-
-The **008 code** added no CSP origins and no dependencies (pure content plumbing + props). One **new secret** was set during the webhook work this session: **`SANITY_REVALIDATE_SECRET`** — live on **Cloudflare** (Worker secret) + set on **Vercel Production** (pending the next deploy) + `.env.local` (see the "Publish webhook" section). Sanity `production` dataset is shared with the live old site — the seeded strings are already live there via the 60s ISR window.
-
-## Publish webhook — HALF-ACTIVATED this session (finish it)
-
-Started the launch-prep "activate the Sanity publish webhook" item; **secrets are set, the two hooks are not yet registered.**
-
-**Done:**
-- `SANITY_REVALIDATE_SECRET` generated (a 64-char hex; the value lives in `.env.local` (gitignored) + both deploys' secret stores).
-- **Cloudflare** Worker: set via `wrangler secret put SANITY_REVALIDATE_SECRET` (account `gregoriomoreta4@gmail.com`) — **live on the Worker now** (encrypted secret; survives the wrangler.jsonc deploy).
-- **Vercel**: added as a **Production** env var (Encrypted) via `vercel env add`. ⚠️ Env vars only apply to **new** deployments, so the *current* prod deployment doesn't have it yet — **the user chose to let the 008 merge trigger the redeploy** that makes it live (or any future `vercel --prod`). Until then the Vercel `/api/revalidate` fails-closed (500).
-- `.env.local` + `.env.example` both carry the var (example was already there from 006).
-
-**Still TODO (manual, browser — the user is handling it):** register **2 GROQ-powered webhooks** at **sanity.io/manage → project `zsuyhr45` → API → Webhooks**. Can't be scripted: the Sanity CLI `hooks create` now only *opens the manage UI*, and the legacy `/hooks/projects` REST API rejects `secret`/`filter`/`httpMethod` and its hooks don't emit the `sanity-webhook-signature` that `@sanity/webhook` (used by `app/api/revalidate`) verifies. Values for **both** hooks (identical but the URL):
-  - **URLs:** `https://rickireign.vercel.app/api/revalidate` and `https://rickireign.gregoriomoreta4.workers.dev/api/revalidate`
-  - Dataset `production` · Trigger **Create/Update/Delete** · Filter `!(_id in path("drafts.**"))` · Projection empty · Method `POST` · API version default (`v2021-06-07`) · **Secret** = the shared value (see `.env.local`) · Drafts off.
-  - **Verify:** `cd studio && npx sanity hooks logs <name>` (or the manage UI "Attempts" tab), or publish a trivial Studio edit → expect a **200**. The CF hook works immediately; the Vercel hook works once its prod redeploy lands.
+- **CF size measurement needs `NEXT_PUBLIC_BUILD_TARGET=cloudflare`** — a bare `opennextjs-cloudflare build` skips the Sentry tree-shake and reports a false **3360 KiB** "over limit". Correct value 2487 KiB.
+- **Playwright `reuseExistingServer` tested a DIFFERENT project's dev server** squatting on `:3000` → 24 bogus failures. Check `curl -s localhost:3000 | grep '<title>'` first; use `E2E_BASE_URL`/`E2E_WEB_COMMAND` on a free port.
+- **Use `--workers=1` on a loaded machine** — parallel workers give `goto`/`evaluate` timeouts that mimic real failures.
+- The 007 `.open-next/worker.js` chicken-and-egg still bites: temporarily set `typescript.ignoreBuildErrors`, run the CF build, `git checkout next.config.ts`.
 
 ## Launch-prep carry-over (restate until done)
 
-**Sentry in prod** — trigger a real error on both targets → confirm it lands in Issues; also CF **source maps** aren't uploading (needs `SENTRY_AUTH_TOKEN` as a Workers-Builds **build** var) + verify the `/monitoring` tunnel under workerd · **finish the publish webhook** (secrets done — register the 2 hooks + let the Vercel redeploy land; see section above) · **domain cutover** (apex `rickireign.com` still serves the OLD site) · **Brevo `rickireign.com` domain sender** (verify SPF/DKIM so mail isn't from the gmail) · **lawyer review** of `/privacy` + `/terms` (+ an error-monitoring line) · **Ricki to review** copy (survey → `docs/planning/ricki-copy-survey.docx`) + the brand-derived **dark palette** + the **AI card images** · optional **performance** pass (the two Turnstile widgets dominate Lighthouse) · **Session Replay** decision (currently off).
+**Sentry in prod** — trigger a real error on both targets → confirm it lands in Issues; CF **source maps** need `SENTRY_AUTH_TOKEN` as a Workers-Builds **build** var; verify the `/monitoring` tunnel under workerd · **finish the publish webhook** — secrets are set on both deploys; still need the **2 GROQ webhooks registered** in sanity.io/manage (project `zsuyhr45` → API → Webhooks; URLs `https://rickireign.vercel.app/api/revalidate` and `https://rickireign.gregoriomoreta4.workers.dev/api/revalidate`, dataset `production`, Create/Update/Delete, filter `!(_id in path("drafts.**"))`, POST, secret in `.env.local`) · **domain cutover** (apex `rickireign.com` still serves the OLD site) · **Brevo `rickireign.com` domain sender** · **lawyer review** of `/privacy` + `/terms` · **Ricki to review** the brand-derived **dark palette** + the **AI card images** · optional **performance** pass (the two Turnstile widgets dominate Lighthouse) · **Session Replay** decision.
 
 ## If you're starting cold
 
-`008-content-to-sanity` (PR #11) is pushed; **do not merge without the human**. If asked to continue, sync `main`, read this file + `CLAUDE.md`, and pick up one of:
-- (a) **apply Ricki's survey answers** in the Studio when they arrive (mostly no-code; `docs/planning/ricki-copy-survey.docx`);
-- (b) **finish the publish webhook** — the 2 hooks are being registered by the user in sanity.io/manage; once they exist (and the 008 merge has redeployed Vercel), verify with `sanity hooks logs` / a test publish (see "Publish webhook" section for exact values);
-- (c) another **launch-prep** item (Sentry prod verify + CF source maps, domain cutover, Brevo domain sender, lawyer review, perf pass).
+`009-ricki-copy-edits` is pushed with a PR; **do not merge without the human**. Its content half is already live. Read this file + `CLAUDE.md`, then pick a **launch-prep** item above (the webhook registration and Sentry prod verification are the two most valuable).
 
-**Plan-first, get sign-off before code**, then cut `NNN-next` off `main` and push immediately. Never delete branches; git/deploy from the main session. **Run `npx opennextjs-cloudflare build` before trusting a local `tsc`/`next build`** (see gotcha).
+**Plan-first, get sign-off before code**, then cut `NNN-next` off `main` and push immediately. Never delete branches; git/deploy from the main session.

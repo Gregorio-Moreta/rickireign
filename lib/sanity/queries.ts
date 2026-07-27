@@ -48,6 +48,7 @@ export const SOMATICS_PAGE_QUERY = defineQuery(`*[_type == "somaticsPage"][0]{
   offerings,
   portrait,
   ctaLabel,
+  booking,
   ctaTarget,
   seo
 }`);

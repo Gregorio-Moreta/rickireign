@@ -7,8 +7,9 @@ import { SparkleIcon } from "@sanity/icons";
  * Ricki's *personal* somatic practice — framed as "a little more about me and
  * how I got here", NOT a sales page. This is the one offering that lives on
  * rickireign.com, and the ONLY place a booking CTA appears anywhere on the site
- * (the home page deliberately has none). The "Book a Discovery Call" label is
- * what wires the CTA to the Calendly popup (see CtaButton).
+ * (the home page deliberately has none). The `booking` toggle — not the label —
+ * is what wires the CTA to the Calendly popup (see CtaButton), so the button
+ * keeps working however the label is reworded.
  */
 export const somaticsPage = defineType({
   name: "somaticsPage",
@@ -58,9 +59,16 @@ export const somaticsPage = defineType({
     defineField({
       name: "ctaLabel",
       type: "string",
-      initialValue: "Book a Discovery Call",
+      initialValue: "Schedule a Conversation",
+      description: "Word this however you like — the button keeps working.",
+    }),
+    defineField({
+      name: "booking",
+      title: "Open the booking popup",
+      type: "boolean",
+      initialValue: true,
       description:
-        'Keep "Discovery Call" in the label to open the Calendly popup.',
+        "On: the button opens the Calendly scheduling popup. Off: it just links to the target below.",
     }),
     defineField({
       name: "ctaTarget",

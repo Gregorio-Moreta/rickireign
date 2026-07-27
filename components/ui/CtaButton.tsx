@@ -6,13 +6,13 @@ import { scrollToSection } from "@/lib/scroll";
 import type { CtaStyle } from "@/lib/sanity/types";
 
 /**
- * Content-driven CTA renderer. A "Book a Discovery Call" CTA opens the Calendly
- * popup; every other CTA is a normal link to its target.
+ * Content-driven CTA renderer. A booking CTA opens the Calendly popup; every
+ * other CTA is a normal link to its target.
  *
- * Booking CTAs are detected by label (no Sanity schema/content change — the live
- * site shares one dataset, so the CTAs must stay valid anchors there too). If a
- * label is reworded away from "…discovery call", the CTA simply falls back to a
- * normal link to its target — no breakage, just no popup.
+ * Which one it is comes from the explicit `booking` flag in Sanity, so the label
+ * is free to be reworded without breaking the popup. Callers that don't pass the
+ * flag fall back to the original label match, which keeps any CTA still worded
+ * "…discovery call" behaving exactly as before.
  */
 function isBookingCta(label: string): boolean {
   return /discovery call/i.test(label);
@@ -23,13 +23,15 @@ export function CtaButton({
   target,
   style,
   className,
+  booking,
 }: {
   label: string;
   target: string;
   style?: CtaStyle;
   className?: string;
+  booking?: boolean;
 }) {
-  if (isBookingCta(label)) {
+  if (booking ?? isBookingCta(label)) {
     return (
       <BookingButton
         variant={style ?? "primary"}

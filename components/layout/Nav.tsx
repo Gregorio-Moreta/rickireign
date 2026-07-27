@@ -17,7 +17,7 @@ const toSectionId = (anchor: string) => anchor.replace(/^#/, "");
  */
 const FALLBACK_LINKS = [
   { _key: "f1", label: "About", anchor: "#about" },
-  { _key: "f2", label: "The Work", anchor: "#work" },
+  { _key: "f2", label: "Work with Reign", anchor: "#work" },
   { _key: "f3", label: "Connect", anchor: "#connect" },
 ];
 
