@@ -32,5 +32,16 @@
   "images": {
     // Worker-native image optimization (next/image)
     "binding": "IMAGES"
-  }
+  },
+  "version_metadata": {
+    // Gives cloudflare/worker.ts a distinct Sentry `release` per deploy for
+    // free. Without a release, Sentry can never resolve Worker-side frames.
+    "binding": "CF_VERSION_METADATA"
+  },
+  // Emit source maps for the Worker bundle so Cloudflare's own tooling
+  // (dashboard errors, `wrangler tail`, Workers Observability) shows readable
+  // stack traces instead of one-line minified output. Maps are uploaded
+  // separately from the script and are NOT counted against the 3 MiB gzip
+  // Worker size limit.
+  "upload_source_maps": true
 }
