@@ -39,9 +39,18 @@ The old note claimed the REST API "can't create a signed GROQ hook" so it had to
 - **"Ancestral Remembering" still exists on `/somatics`** while "ancestral" is stripped from the home page. Her service titles are hers to rewrite. Known temporary inconsistency.
 - **Two "lineage" mentions remain on the home page** and are correct: the guiding question she said she'd rewrite herself, and the Community Birth Village description (never marked in her survey).
 
-## Housekeeping flag
+## Token rotation — done (010)
 
-`sanity debug --secrets` printed the **Sanity CLI auth token** into this session's transcript/log while checking auth. It was not sent anywhere external, but it is a personal API token sitting in a local `.jsonl`. **Recommend rotating it** (`npx sanity logout && npx sanity login`) at a convenient moment. Use `sanity debug` *without* `--secrets` for auth checks.
+`sanity debug --secrets` printed the **Sanity CLI user token** into the session log. It was rotated and verified the same session:
+
+- `npx sanity logout` → `npx sanity@latest login --provider github`.
+- **`logout` revokes server-side, it does not merely delete the local copy** — proven: the old token went `200` → `401` on `/users/me` and on the project hooks endpoint immediately after logout. Fingerprints confirm a genuinely new token.
+- `~/.config/sanity/config.json` ships **mode 644 (world-readable)**; tightened to **600**. Worth re-checking after any future `sanity login`, which may recreate it at 644.
+- **Nothing else needed rotating:** the project has **zero project-level access tokens** (so the manage-console "delete the token" flow in the docs does not apply here); the webhook secret was never printed; Brevo/Turnstile were untouched.
+
+**Rule going forward:** use plain `npx sanity debug` for auth checks — it answers "logged in, as whom" without printing credentials. Never `--secrets`.
+
+Residual: the dead token string persists in the session `.jsonl` (and any archive copy). Inert once revoked.
 
 ## What 009 shipped (reference — merged and live)
 
