@@ -1,6 +1,64 @@
 # Sentry
 
-**Status: INSTALLED + live (dormant without a DSN).** `@sentry/nextjs` v10 lands on both deploy targets; the **Cloudflare** target additionally uses `@sentry/cloudflare` (see the split below). The historical "deferred plan" is kept at the bottom for context.
+**Status: LIVE AND VERIFIED ON BOTH TARGETS (011).** Client and server error capture were confirmed with real, deliberately-triggered production errors — not by inspecting config. `@sentry/nextjs` v10 lands on both deploy targets; the **Cloudflare** target additionally uses `@sentry/cloudflare` (see the split below). The historical "deferred plan" is kept at the bottom for context.
+
+---
+
+## 011 — what was actually broken, and how it's verified
+
+Before 011 Sentry *looked* configured everywhere and captured almost nothing on Cloudflare. Two independent faults, both silent: no error, no warning, a green build.
+
+**Fault 1 — the browser SDK was inert on Cloudflare.** `NEXT_PUBLIC_SENTRY_DSN` is inlined at `next build`; the CF build runs inside Workers Builds, where it was never set. `instrumentation-client.ts` therefore shipped `enabled: Boolean(undefined)` = `false`. The DSN in `wrangler.jsonc` is a **runtime** var and never reaches the build. Fixed by committing the DSN as a default in `lib/env.ts` — it is public, and already committed in `wrangler.jsonc` — under the same default-or-build-var rule as the Sanity ids, the GA id and the Turnstile site key.
+
+**Fault 2 — server capture on Cloudflare was structurally near-zero.** This one was not in the bug report and is the more valuable find. OpenNext catches every Next-level error and logs it rather than rethrowing:
+
+```js
+// @opennextjs/aws/dist/core/requestHandler.js
+catch (e) { error("NextJS request failed.", e); await tryRenderError("500", …) }
+```
+
+so `@sentry/cloudflare`'s `withSentry` only ever sees a finished 500 *Response* — and it calls `captureException` only from its own `catch`. Fixed with `captureConsoleIntegration({ levels: ["error"] })`, which promotes that swallowed `console.error` into a real event at ~zero bundle cost. **Do not** "fix" this by reinstating the Node SDK on Cloudflare; that is precisely what the 007 split exists to prevent.
+
+### How to re-verify (the probes are permanent)
+
+`lib/sentry-check.ts` gates three deliberate error paths, fail-closed to a bare 404 unless `SENTRY_CHECK_TOKEN` is set. Set it, probe, then **remove it from both targets**.
+
+```bash
+# Cloudflare: runtime secret. Vercel: env var + redeploy.
+npx wrangler secret put SENTRY_CHECK_TOKEN
+vercel env add SENTRY_CHECK_TOKEN production && vercel --prod
+
+V=https://rickireign.vercel.app; C=https://rickireign.gregoriomoreta4.workers.dev
+# Vercel Node server (@sentry/nextjs onRequestError)  -> 500
+curl -i -X POST -H "x-sentry-check-token: $T" "$V/api/sentry-check?label=vercel-node"
+# CF, escapes OpenNext into withSentry            -> 500, NO x-opennext header
+curl -i -X POST -H "x-sentry-check-token: $T" "$C/api/sentry-check/worker?label=cf-workerd"
+# CF, swallowed by OpenNext (captureConsole path)  -> 500 WITH x-opennext: 1
+curl -i -X POST -H "x-sentry-check-token: $T" "$C/api/sentry-check?label=cf-nextjs"
+```
+
+`x-opennext: 1` is the tell: present = OpenNext swallowed it (only `captureConsole` sees it); absent = it escaped into Sentry's own path.
+
+For the **browser**, open either origin, run `setTimeout(() => { throw new Error("check") })` in the console, and watch for `POST /monitoring?o=…&p=…&r=us` → **200**. That request is the proof; before 011 Cloudflare produced none.
+
+### The tunnel is not broken — don't re-test it wrong
+
+`GET /monitoring` returning 404 is **correct**. The rewrite only matches when the request carries `?o=`, which the SDK always sends. Assert on the POST:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+  "$V/monitoring?o=4511575656497152&p=4511621914361856&r=us"   # 401 from Sentry = proxy works
+```
+
+A bare `GET /monitoring` used to return **500 on Cloudflare only**. That was an `@opennextjs/aws` routing bug — its `routeHasMatcher` `query` branch has no presence check, and Sentry writes its `has` conditions as `\d*`, so an absent `o`/`p` "matched", compiled with empty params and threw. Guarded in `cloudflare/worker.ts`. **Never add `app/monitoring/route.ts`** — a real route makes OpenNext skip the `afterFiles` rewrites entirely and would kill ingest on *both* targets.
+
+### Privacy correction
+
+`sendDefaultPii: false` suppresses cookies and headers but **not request bodies**, and `@sentry/cloudflare` defaults `maxRequestBodySize` to `"medium"` — so `/api/newsletter` and `/api/contact` submissions (email addresses, free-text messages) were being attached to Worker events. Now pinned to `"none"`.
+
+### Source maps
+
+Debug IDs were always injected; the *upload* never happened without an auth token, and the "No auth token provided. Will not upload source maps." warning is a `logger.warn` that our `silent: !process.env.CI` swallows. Vercel uploads correctly (33 files, confirmed in its build log). For **Cloudflare**, `SENTRY_AUTH_TOKEN` must be a Workers-**Builds** *build* secret — a runtime `wrangler secret put` of that name is the wrong store and does nothing for the build — and it only takes effect on a Workers Builds run. Expect Worker-side frames to stay minified regardless: they come from the wrangler/esbuild bundle, which `withSentryConfig` never sees. `upload_source_maps: true` in `wrangler.jsonc` gives readable traces in Cloudflare's own tooling instead; maps are not counted against the 3 MiB Worker limit.
 
 ---
 
