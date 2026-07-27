@@ -106,8 +106,16 @@ const nextConfig: NextConfig = {
  *     events. The consent/headers config must keep /monitoring un-gated.
  */
 export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+  // org/project are public identifiers, not secrets, so they get committed
+  // defaults like the other public config in lib/env.ts. Without them the
+  // upload is skipped — and the "No auth token provided. Will not upload source
+  // maps." warning is a logger.warn, which `silent` below swallows. That is how
+  // both targets ended up injecting debug IDs but never uploading the maps.
+  org: process.env.SENTRY_ORG || "example-1wv",
+  project: process.env.SENTRY_PROJECT || "ricki-reign",
+  // Secret — build-time only, never NEXT_PUBLIC_, never a committed default.
+  // Vercel: project env var. Cloudflare: a Workers-BUILDS secret (the runtime
+  // `wrangler secret put` store is a different thing that `next build` cannot see).
   authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
