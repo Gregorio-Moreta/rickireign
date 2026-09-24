@@ -1,0 +1,167 @@
+- generic [ref=f26e1]:
+  - link "Skip to content" [ref=f26e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner [ref=f26e3]:
+    - navigation [ref=f26e4]:
+      - link "Ricki Reign" [ref=f26e5] [cursor=pointer]:
+        - /url: /
+      - generic [ref=f26e6]:
+        - list [ref=f26e7]:
+          - listitem [ref=f26e8]:
+            - link "About" [ref=f26e9] [cursor=pointer]:
+              - /url: /#about
+          - listitem [ref=f26e10]:
+            - link "Work with Reign" [ref=f26e11] [cursor=pointer]:
+              - /url: /#work
+          - listitem [ref=f26e12]:
+            - link "Connect" [ref=f26e13] [cursor=pointer]:
+              - /url: /#connect
+          - listitem [ref=f26e14]:
+            - link "Journal" [ref=f26e15] [cursor=pointer]:
+              - /url: /journal
+        - button "Switch to dark theme" [ref=f26e16] [cursor=pointer]
+  - main [ref=f26e19]:
+    - region "Introduction" [ref=f26e20]:
+      - generic [ref=f26e22]:
+        - generic [ref=f26e23]:
+          - heading "Lead from steadiness." [level=1] [ref=f26e24]
+          - paragraph [ref=f26e25]: Ricki Reign is a community facilitator and strategist — working across organizations, communities, and individuals.
+          - button "Follow along" [ref=f26e27] [cursor=pointer]
+        - generic [ref=f26e28]:
+          - img "Ricki Reign" [ref=f26e29]
+          - generic [ref=f26e30]:
+            - paragraph [ref=f26e31]: Current Focus
+            - list [ref=f26e32]:
+              - listitem [ref=f26e33]: Somatic leadership intensives
+              - listitem [ref=f26e35]: Community Birth Village
+              - listitem [ref=f26e37]: Writing on leadership and presence
+    - region "Guiding questions" [ref=f26e39]:
+      - generic [ref=f26e41]:
+        - blockquote [ref=f26e42]: What would change if you led from your body, not just your mind?
+        - generic [ref=f26e43]: "* * *"
+        - blockquote [ref=f26e44]: Where are you bracing when you could be breathing?
+        - generic [ref=f26e45]: "* * *"
+        - blockquote [ref=f26e46]: What does your lineage already know that you are relearning?
+    - region "Where the work comes from." [ref=f26e47]:
+      - generic [ref=f26e50]:
+        - paragraph [ref=f26e51]: Meet Reign
+        - heading "Where the work comes from." [level=2] [ref=f26e52]
+        - generic [ref=f26e53]:
+          - paragraph [ref=f26e54]: Ricki Reign is a community facilitator and strategist. She works alongside founders, executives, and community leaders, helping them lead from steadiness — making decisions from a settled place rather than from pressure.
+          - paragraph [ref=f26e55]: "Her path didn't begin in a boardroom. It began in the body: years of somatic practice, and learning — often the hard way — that the quality of a person's presence shapes everything downstream of it. That conviction now threads through everything she builds."
+          - paragraph [ref=f26e56]: Today the work takes three shapes. She founded and leads Exhale Under Pressure, helping leaders who carry real weight stay resourced, and Community Birth Village, offering community-rooted birth support. Alongside them she keeps a personal embodiment practice — the one-to-one room where all of this began.
+          - paragraph [ref=f26e57]: "What ties it together is a single question: what becomes possible when people lead from presence instead of pressure? Her work is to help them find out — with warmth, rigor, and real respect for where people come from."
+    - region "Work with Reign" [ref=f26e58]:
+      - generic [ref=f26e59]:
+        - generic [ref=f26e60]:
+          - heading "Work with Reign" [level=2] [ref=f26e61]
+          - paragraph [ref=f26e62]: The work takes three shapes — embodiment practice one-to-one, leadership and organizational development, and community education. Each has its own home; here's where to go deeper.
+        - list [ref=f26e63]:
+          - listitem [ref=f26e64]:
+            - img "Embodiment Practices" [ref=f26e65]
+            - generic [ref=f26e66]:
+              - heading "Embodiment Practices" [level=3] [ref=f26e67]
+              - paragraph [ref=f26e68]: Somatics · one-to-one with Reign
+              - paragraph [ref=f26e69]: My one-to-one work — staying steady under pressure and leading from the body. A little more about how I practice, and how I got here.
+              - 'link "Learn more: Embodiment Practices" [ref=f26e71] [cursor=pointer]':
+                - /url: /somatics
+                - text: Learn more
+          - listitem [ref=f26e74]:
+            - img "Leadership and Organizational Development" [ref=f26e75]
+            - generic [ref=f26e76]:
+              - heading "Leadership and Organizational Development" [level=3] [ref=f26e77]
+              - paragraph [ref=f26e78]: Exhale Under Pressure
+              - paragraph [ref=f26e79]: A somatic practice helping executives and founders regulate their nervous systems and lead from steadiness under real pressure.
+              - 'link "Visit site: Leadership and Organizational Development (opens in a new tab)" [ref=f26e81] [cursor=pointer]':
+                - /url: https://exhaleunderpressure.com
+                - text: Visit site
+          - listitem [ref=f26e84]:
+            - img "Community Education" [ref=f26e85]
+            - generic [ref=f26e86]:
+              - heading "Community Education" [level=3] [ref=f26e87]
+              - paragraph [ref=f26e88]: Community Birth Village
+              - paragraph [ref=f26e89]: A village model of birth and postpartum care that centers community, lineage, and the dignity of every family.
+              - 'link "Visit site: Community Education (opens in a new tab)" [ref=f26e91] [cursor=pointer]':
+                - /url: https://communitybirthvillage.org
+                - text: Visit site
+    - region "Join the community to learn more" [ref=f26e94]:
+      - generic [ref=f26e96]:
+        - heading "Join the community to learn more" [level=2] [ref=f26e97]
+        - paragraph [ref=f26e98]: Receive occasional events and updates.
+        - form "Newsletter sign-up" [ref=f26e99]:
+          - generic [ref=f26e100]:
+            - generic [ref=f26e101]: Email address
+            - textbox "Email address" [ref=f26e102]:
+              - /placeholder: you@example.com
+            - text: Company
+            - textbox [ref=f26e103]
+            - button "Subscribe" [ref=f26e104] [cursor=pointer]
+    - region "Send a Message" [ref=f26e105]:
+      - generic [ref=f26e107]:
+        - heading "Send a Message" [level=2] [ref=f26e108]
+        - paragraph [ref=f26e109]: Follow along, or reach out to work together.
+        - form "Contact form" [ref=f26e110]:
+          - generic [ref=f26e111]:
+            - generic [ref=f26e112]: Name
+            - textbox "Name" [ref=f26e113]
+          - generic [ref=f26e114]:
+            - generic [ref=f26e115]: Email
+            - textbox "Email" [ref=f26e116]
+          - generic [ref=f26e117]:
+            - generic [ref=f26e118]: Message
+            - textbox "Message" [ref=f26e119]
+          - text: Company
+          - textbox [ref=f26e120]
+          - button "Send message" [ref=f26e122] [cursor=pointer]
+        - generic [ref=f26e123]:
+          - paragraph [ref=f26e124]:
+            - text: Prefer email?
+            - link "welcome@rickireign.com" [ref=f26e125] [cursor=pointer]:
+              - /url: mailto:welcome@rickireign.com
+          - list [ref=f26e126]:
+            - listitem [ref=f26e127]:
+              - link "Instagram" [ref=f26e128] [cursor=pointer]:
+                - /url: https://instagram.com/rickireign
+            - listitem [ref=f26e131]:
+              - link "YouTube" [ref=f26e132] [cursor=pointer]:
+                - /url: https://youtube.com/@rickireign
+  - contentinfo [ref=f26e135]:
+    - generic [ref=f26e136]:
+      - generic [ref=f26e137]:
+        - link "Ricki Reign" [ref=f26e138] [cursor=pointer]:
+          - /url: /
+        - navigation "Footer" [ref=f26e139]:
+          - list [ref=f26e140]:
+            - listitem [ref=f26e141]:
+              - link "Journal" [ref=f26e142] [cursor=pointer]:
+                - /url: /journal
+            - listitem [ref=f26e143]:
+              - link "Contact" [ref=f26e144] [cursor=pointer]:
+                - /url: /#connect
+            - listitem [ref=f26e145]:
+              - link "Privacy" [ref=f26e146] [cursor=pointer]:
+                - /url: /privacy
+            - listitem [ref=f26e147]:
+              - link "Terms" [ref=f26e148] [cursor=pointer]:
+                - /url: /terms
+            - listitem [ref=f26e149]:
+              - button "Cookie settings" [ref=f26e150] [cursor=pointer]
+        - list [ref=f26e151]:
+          - listitem [ref=f26e152]:
+            - link "Instagram" [ref=f26e153] [cursor=pointer]:
+              - /url: https://instagram.com/rickireign
+          - listitem [ref=f26e156]:
+            - link "YouTube" [ref=f26e157] [cursor=pointer]:
+              - /url: https://youtube.com/@rickireign
+      - paragraph [ref=f26e160]: © Ricki Reign. Community facilitator and strategist.
+  - alert [ref=f26e161]
+  - dialog [active] [ref=f26e163]:
+    - heading "A note on cookies" [level=2] [ref=f26e164]
+    - paragraph [ref=f26e165]:
+      - text: We use cookies to understand how the site is used. Analytics stays off until you accept — you can change this anytime via “Cookie settings” in the footer. See our
+      - link "Privacy Policy" [ref=f26e166] [cursor=pointer]:
+        - /url: /privacy
+      - text: .
+    - generic [ref=f26e167]:
+      - button "Decline" [ref=f26e168] [cursor=pointer]
+      - button "Accept" [ref=f26e169] [cursor=pointer]

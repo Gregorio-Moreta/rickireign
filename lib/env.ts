@@ -35,6 +35,16 @@ const TURNSTILE_SITE_KEY_DEFAULT = "0x4AAAAAADnIF3Wg90-SW3H_";
 // The "Discovery Call" event type (one-on-one, 60 min, active) on Ricki's
 // Calendly. Public scheduling link — opens straight to the date picker.
 const CALENDLY_URL_DEFAULT = "https://calendly.com/gregorioe-moreta/discovery-call";
+// Sentry DSN. Public by design — a DSN is an ingestion endpoint, not a
+// credential (the same value is already committed in `wrangler.jsonc` for the
+// Worker). Committed as a default for a sharper reason than the keys above: a
+// missing NEXT_PUBLIC_SENTRY_DSN does NOT fail the build, it silently ships a
+// DISABLED SDK. Cloudflare ran with zero browser error monitoring that way —
+// green build, correct-looking config, no events — because Workers Builds reads
+// build vars from a separate, easily-missed section. An env var still overrides.
+// The real SECRET (SENTRY_AUTH_TOKEN, source-map upload) stays out of this file.
+const SENTRY_DSN_DEFAULT =
+  "https://03bea0b82197b6f523bbfc36d73506d1@o4511575656497152.ingest.us.sentry.io/4511621914361856";
 
 export const publicEnv = {
   /** GA4 measurement id (e.g. "G-XXXXXXXXXX"). Falls back to the committed default. */
@@ -50,4 +60,7 @@ export const publicEnv = {
     process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || TURNSTILE_SITE_KEY_DEFAULT,
   /** Calendly public scheduling URL. Falls back to the committed default. */
   calendlyUrl: process.env.NEXT_PUBLIC_CALENDLY_URL || CALENDLY_URL_DEFAULT,
+  /** Sentry DSN (public). Falls back to the committed default so a missing
+   *  build var can't silently disable error monitoring. */
+  sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN || SENTRY_DSN_DEFAULT,
 } as const;
