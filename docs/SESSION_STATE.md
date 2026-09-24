@@ -62,6 +62,15 @@ The long-standing "local `tsc`/`next build` fails on `cloudflare/worker.ts`" got
 
 New Somatics service titles · her own About bio · guiding questions · confirm the hero headline · testimonials decision · Exhale/CBV `externalUrl` (their "Visit site" buttons go nowhere) · `hero.currentFocus` still blends the two things she wants separated. All no-code at https://rickireign.sanity.studio.
 
+## Phase protocol (adopted 2026-09-24)
+
+Phases now follow `~/.claude/skills/phase-kickoff/SKILL.md` + `/phase-handoff`, with `docs/phases/INDEX.md` as the registry. For this branch that means:
+- **011 is already built, so resuming it is a continuation, not a kickoff.** Rename the chat `Phase 011 — Sentry Prod` (a new chat is `Phase 011 — Sentry Prod · Part 2`) and file it under `Rickireign · Block 03 (010–014)`. Do **not** run the kickoff's plan-mode or branch-cut steps.
+- **The 011 handoff is the first to publish a close-out artifact** (`docs/phases/011-sentry-prod/closeout.html`). It has no plan artifact, so plan-vs-actual comes from this file's scope and the footer links read `none (pre-protocol)`. Block 03 has no block page yet, so skip the block update.
+- **PR #14 carries the protocol bootstrap.** The 011 handoff commits `docs/phases/` (INDEX.md + the close-out), the updated `.claude/skills/phase-handoff/SKILL.md`, `CLAUDE.md` and this file onto `011-sentry-prod`. Until #14 merges, `main` has none of it, so 012 either waits for #14 or stacks on `011-sentry-prod`.
+- **Don't commit `.playwright-mcp/`.** A tracked log in it is over 100 MB and GitHub will reject the push. The project handoff step 5 untracks it.
+- The 011 handoff coins the 012 theme from the remaining launch-prep scope, and the next kickoff's first line is `Phase 012 — <that theme>`. That kickoff must **create the Block 03 plan (phases 010–014)** in plan mode before planning 012. It backfills 010 as Closed (merged 2026-07-27) and 011 as Closed (handed off; INDEX shows `Merged` only once #14 lands).
+
 ## If you're starting cold
 
 `010` is merged. **`011-sentry-prod` is pushed with both prod targets deployed from it and verified** — but **not merged**. Finish the three open items above, then open/merge the PR with the human. Never delete branches; git/deploy from the main session.
